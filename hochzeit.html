@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Jan &amp; Paulina 💍</title>
+<style>
+/* ── Reset & Tokens ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --sage:#7a9e7e;--sage-d:#5a7d5e;--sage-l:#a8c5ab;
+  --rose:#c9897a;--rose-d:#a06255;--gold:#c4943a;
+  --cream:#faf7f2;--white:#fff;--bg:#f4f0eb;
+  --text:#3a3330;--text-l:#7a726e;--border:#e2d9d0;
+  --shadow:rgba(58,51,48,.08);--shadow-m:rgba(58,51,48,.13);
+  --nav-h:60px;--top-h:112px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);
+  font-family:'Segoe UI',system-ui,sans-serif;font-size:15px;overscroll-behavior:none}
+
+/* ══════════════════════════════════════════
+   SHARED
+══════════════════════════════════════════ */
+.tab{display:none}.tab.active{display:block}
+.card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px}
+.card-title{font-size:.78rem;font-weight:700;color:var(--text-l);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.badge{display:inline-block;padding:3px 9px;border-radius:10px;font-size:.72rem;font-weight:700}
+.b-z{background:#e8f5e9;color:#6ba36e}.b-e{background:#fff8e1;color:var(--gold)}
+.b-a{background:#fce4e4;color:var(--rose-d)}.b-l{background:#eee;color:#7a7a8a}
+.chips{display:flex;gap:7px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;padding:5px 14px;border-radius:20px;border:1px solid var(--border);
+  background:var(--white);color:var(--text-l);font-size:.82rem;cursor:pointer;
+  white-space:nowrap;transition:all .15s;font-family:inherit}
+.chip:hover{border-color:var(--sage-l);color:var(--text)}
+.chip.active{background:var(--sage);color:#fff;border-color:var(--sage);font-weight:600}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 15px;border-radius:8px;
+  border:none;cursor:pointer;font-size:.85rem;font-weight:600;font-family:inherit;transition:background .15s}
+.btn-p{background:var(--sage);color:#fff}.btn-p:hover{background:var(--sage-d)}
+.btn-d{background:#fde8e8;color:var(--rose-d)}.btn-d:hover{background:#f8d0ce}
+.btn-s{background:var(--border);color:var(--text)}.btn-s:hover{background:#d5ccc4}
+.btn-sm{padding:5px 11px;font-size:.78rem}
+.section-lbl{font-size:.75rem;font-weight:700;color:var(--text-l);text-transform:uppercase;
+  letter-spacing:.5px;display:flex;align-items:center;gap:8px;margin:16px 0 8px}
+.section-lbl::after{content:'';flex:1;height:1px;background:var(--border)}
+.empty{text-align:center;padding:32px 16px;color:var(--text-l);font-size:.88rem}
+.count-lbl{font-size:.78rem;color:var(--text-l);margin-bottom:10px}
+.search-wrap{position:relative;margin-bottom:12px}
+.search-wrap input{width:100%;padding:9px 12px 9px 36px;border:1px solid var(--border);
+  border-radius:10px;background:var(--white);font-size:.9rem;color:var(--text);font-family:inherit}
+.search-wrap input:focus{outline:none;border-color:var(--sage-l)}
+.search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);
+  width:15px;height:15px;stroke:var(--text-l);fill:none;stroke-width:2}
+
+/* Budget */
+.bud-bar-out{height:10px;background:#ece5dd;border-radius:6px;overflow:hidden;margin:6px 0}
+.bud-bar-in{height:100%;background:linear-gradient(90deg,var(--sage),var(--sage-d));border-radius:6px;transition:width .4s}
+.bud-bar-in.over{background:linear-gradient(90deg,var(--rose),var(--rose-d))}
+.kat-mini-bar{height:5px;background:#ece5dd;border-radius:3px;overflow:hidden;margin-top:3px}
+.kat-mini-fill{height:100%;background:var(--sage);border-radius:3px;transition:width .3s}
+.kat-mini-fill.over{background:var(--rose)}
+.budget-input{width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;
+  font-size:.88rem;color:var(--text);background:var(--cream)}
+.budget-input:focus{outline:none;border-color:var(--sage-l);background:var(--white)}
+
+/* Timeline */
+.tl-item{display:flex;gap:14px;padding:10px 0;border-bottom:1px solid #f0ebe4}
+.tl-item:last-child{border-bottom:none}
+.tl-time{width:90px;flex-shrink:0;font-size:.78rem;color:var(--text-l);font-weight:700;padding-top:2px}
+.tl-titel{font-weight:600;font-size:.88rem}
+.tl-notiz{font-size:.75rem;color:var(--text-l);margin-top:2px}
+
+/* Todo */
+.todo-item{display:flex;gap:10px;align-items:flex-start;padding:11px 0;border-bottom:1px solid #f0ebe4}
+.todo-item:last-child{border-bottom:none}
+.todo-cb{width:20px;height:20px;accent-color:var(--sage);cursor:pointer;flex-shrink:0;margin-top:1px}
+.todo-txt{font-weight:500;font-size:.9rem;word-break:break-word}
+.todo-txt.done{text-decoration:line-through;opacity:.5}
+.todo-meta{font-size:.75rem;color:var(--text-l);margin-top:2px}
+.todo-kat-lbl{display:inline-block;padding:2px 7px;border-radius:8px;font-size:.68rem;
+  font-weight:700;background:var(--cream);color:var(--text-l);margin-bottom:6px;letter-spacing:.3px}
+
+/* Dienstleister */
+.dl-item{padding:10px 0;border-bottom:1px solid #f0ebe4}
+.dl-item:last-child{border-bottom:none}
+.dl-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.dl-name{font-weight:700;font-size:.9rem}
+.dl-detail{font-size:.78rem;color:var(--text-l);margin-top:3px}
+
+/* Countdown hero */
+.hero{background:linear-gradient(135deg,var(--sage),var(--sage-d));color:#fff;
+  border-radius:18px;padding:28px 20px;text-align:center;margin-bottom:14px}
+.hero-orn{font-size:.75rem;letter-spacing:.6rem;opacity:.5;margin-bottom:4px}
+.hero-num{font-size:4rem;font-weight:800;line-height:1;letter-spacing:-2px}
+.hero-lbl{font-size:.9rem;opacity:.85;margin-top:4px}
+.hero-date{font-size:.75rem;opacity:.65;margin-top:3px}
+
+/* Stat cards */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.stat{background:var(--white);border:1px solid var(--border);border-radius:12px;
+  padding:14px 10px;text-align:center;border-top:3px solid var(--sage);position:relative;
+  font-family:inherit;width:100%}
+.stat.gold{border-top-color:var(--gold)}.stat.rose{border-top-color:var(--rose)}
+.stat-val{font-size:1.7rem;font-weight:800;color:var(--sage-d)}
+.stat-lbl{font-size:.68rem;color:var(--text-l);margin-top:3px}
+.stat-link{cursor:pointer;transition:transform .15s,box-shadow .15s}
+.stat-link:hover{transform:translateY(-2px);box-shadow:0 6px 18px var(--shadow-m)}
+.stat-link:active{transform:scale(.97)}
+.stat-arr{position:absolute;bottom:7px;right:9px;font-size:.65rem;color:var(--text-l);
+  opacity:0;transform:translateX(-3px);transition:opacity .2s,transform .2s}
+.stat-link:hover .stat-arr{opacity:1;transform:translateX(0)}
+
+/* Guest row (shared) */
+.guest-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0ebe4}
+.guest-item:last-child{border-bottom:none}
+.grp-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.guest-name{flex:1;font-weight:600;font-size:.9rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.status-sel{border:none;cursor:pointer;font-size:.72rem;font-weight:700;padding:3px 7px;
+  border-radius:10px;background:inherit;font-family:inherit}
+
+/* Info table */
+.info-dl{width:100%}
+.info-row{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #f0ebe4;font-size:.88rem}
+.info-row:last-child{border-bottom:none}
+.info-dt{font-weight:600;width:140px;flex-shrink:0;color:var(--text-l)}
+
+/* ══════════════════════════════════════════
+   MOBILE  (default – < 768 px)
+══════════════════════════════════════════ */
+#top-nav{display:none}
+#bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--white);
+  border-top:1px solid var(--border);display:flex;z-index:100;
+  padding-bottom:env(safe-area-inset-bottom)}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:8px 4px;gap:2px;border:none;background:none;cursor:pointer;
+  font-size:.62rem;color:var(--text-l);font-family:inherit;transition:color .15s;white-space:nowrap}
+.nav-btn.active{color:var(--sage-d);font-weight:700}
+.nav-btn svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round}
+#app{display:flex;flex-direction:column;height:100%;height:100dvh}
+#content{flex:1;overflow-y:auto;padding:16px 16px 80px}
+
+/* Mobile: budget table hidden, cards shown */
+.bud-table-wrap{display:none}
+
+/* ══════════════════════════════════════════
+   DESKTOP  (≥ 768 px)
+══════════════════════════════════════════ */
+@media(min-width:768px){
+  body{background:var(--cream)}
+  #bottom-nav{display:none}
+  #top-nav{
+    display:block;background:var(--white);border-bottom:1px solid var(--border);
+    position:sticky;top:0;z-index:100;box-shadow:0 2px 10px var(--shadow)
+  }
+  .top-nav-inner{max-width:1100px;margin:0 auto;padding:0 24px}
+  .top-brand{display:flex;align-items:baseline;gap:14px;padding:14px 0 12px}
+  .top-brand h1{font-size:1.3rem;font-weight:700;color:var(--text);font-style:italic}
+  .top-brand span{font-size:.8rem;color:var(--text-l)}
+  .top-tabs{display:flex;gap:2px}
+  .top-tab{background:none;border:none;padding:10px 16px;cursor:pointer;font-size:.88rem;
+    color:var(--text-l);border-bottom:3px solid transparent;font-family:inherit;
+    white-space:nowrap;transition:color .15s,border-color .15s}
+  .top-tab:hover{color:var(--text)}
+  .top-tab.active{color:var(--sage-d);border-bottom-color:var(--sage);font-weight:700}
+  #app{display:block;height:auto;min-height:100vh}
+  #content{overflow:visible;padding:28px 24px 60px;max-width:1100px;margin:0 auto}
+
+  /* Desktop hero + stats */
+  .hero{border-radius:20px;padding:36px 40px}
+  .hero-num{font-size:5rem}
+  .stats{grid-template-columns:repeat(6,1fr)}
+  .stat{padding:18px 10px}.stat-val{font-size:1.9rem}
+
+  /* Desktop guest list — wider rows */
+  .guest-item{padding:11px 14px}
+  .guest-note{display:block!important}  /* hidden on mobile */
+
+  /* Desktop budget: show full table */
+  .bud-table-wrap{display:block}
+  .bud-card-list{display:none}  /* hide cards on desktop */
+  .bud-table{width:100%;border-collapse:collapse}
+  .bud-table th{background:#f5f0eb;padding:10px 14px;text-align:left;font-size:.78rem;
+    font-weight:700;color:var(--text-l);text-transform:uppercase;letter-spacing:.4px;
+    border-bottom:1px solid var(--border)}
+  .bud-table td{padding:9px 14px;font-size:.9rem;border-bottom:1px solid #f0ebe4}
+  .bud-table tr:last-child td{border-bottom:none}
+  .bud-table tr:hover td{background:#fdfaf7}
+
+  /* Desktop: 2-col layout for mehr */
+  .mehr-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+
+  /* Desktop: DL grid */
+  .dl-grid-wrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+  .dl-grid-card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px}
+  .card{border-radius:12px}
+}
+
+@media print{
+  #top-nav,#bottom-nav,.chips,.btn{display:none!important}
+  body{background:#fff}
+  #content{padding:0;max-width:100%}
+  .tab{display:block!important;page-break-after:always}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ DESKTOP TOP NAV ══ -->
+<header id="top-nav">
+  <div class="top-nav-inner">
+    <div class="top-brand">
+      <h1>Jan &amp; Paulina</h1>
+      <span>05. September 2026 · Badsaal Schnaittach</span>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+        <span id="sync-dot" title="Synchronisiert" style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#6ba36e;flex-shrink:0"></span>
+        <button class="btn btn-s btn-sm" onclick="window.print()">🖨 Drucken</button>
+      </div>
+    </div>
+    <div class="top-tabs">
+      <button class="top-tab active" onclick="showTab('home',this,'top')">Übersicht</button>
+      <button class="top-tab" onclick="showTab('gaeste',this,'top')">Gästeliste</button>
+      <button class="top-tab" onclick="showTab('budget',this,'top')">Budget</button>
+      <button class="top-tab" onclick="showTab('todo',this,'top')">To-Do</button>
+      <button class="top-tab" onclick="showTab('mehr',this,'top')">Zeitplan &amp; Mehr</button>
+    </div>
+  </div>
+</header>
+
+<div id="app">
+<div id="content">
+
+  <!-- ══ ÜBERSICHT ══ -->
+  <div id="tab-home" class="tab active">
+    <div class="hero">
+      <div class="hero-orn">✦ ✦ ✦</div>
+      <div class="hero-num" id="cd">–</div>
+      <div class="hero-lbl">Tage bis zur Hochzeit</div>
+      <div class="hero-date">Samstag, 05. September 2026</div>
+      <div class="hero-orn" style="margin-top:6px">✦ ✦ ✦</div>
+    </div>
+    <div class="stats">
+      <button type="button" class="stat gold stat-link" onclick="navigateTo('gaeste','alle')">
+        <div class="stat-val" id="s-eing">–</div><div class="stat-lbl">eingeladen</div><div class="stat-arr">→</div>
+      </button>
+      <button type="button" class="stat stat-link" onclick="navigateTo('gaeste','Zugesagt')">
+        <div class="stat-val" id="s-zug">–</div><div class="stat-lbl">zugesagt</div><div class="stat-arr">→</div>
+      </button>
+      <button type="button" class="stat rose stat-link" onclick="navigateTo('gaeste','Abgesagt')">
+        <div class="stat-val" id="s-abg">–</div><div class="stat-lbl">abgesagt</div><div class="stat-arr">→</div>
+      </button>
+      <button type="button" class="stat stat-link" onclick="navigateTo('budget',null)">
+        <div class="stat-val" id="s-budpct">–%</div><div class="stat-lbl">Budget genutzt</div><div class="stat-arr">→</div>
+      </button>
+      <button type="button" class="stat stat-link" onclick="navigateTo('todo','offen')">
+        <div class="stat-val" id="s-open">–</div><div class="stat-lbl">To-Dos offen</div><div class="stat-arr">→</div>
+      </button>
+      <button type="button" class="stat stat-link" onclick="navigateTo('todo','erledigt')">
+        <div class="stat-val" id="s-done">–</div><div class="stat-lbl">To-Dos erledigt</div><div class="stat-arr">→</div>
+      </button>
+    </div>
+    <div class="card">
+      <div class="card-title">💰 Budget</div>
+      <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:4px">
+        <span><strong id="s-budout">0 €</strong> ausgegeben</span>
+        <span style="color:var(--text-l)">von <strong id="s-budtot">15.000 €</strong></span>
+      </div>
+      <div class="bud-bar-out"><div class="bud-bar-in" id="s-budbar" style="width:0%"></div></div>
+      <div style="font-size:.8rem;color:var(--text-l);margin-top:4px">Verbleibend: <strong id="s-budrest">–</strong></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🏛 Standesamt – Fr, 04. September 2026</div>
+      <div class="info-dl">
+        <div class="info-row"><dt class="info-dt">Uhrzeit</dt><dd>10:00 – 10:15 Uhr</dd></div>
+        <div class="info-row"><dt class="info-dt">Im Anschluss</dt><dd>Brunchen – Cafe und Bar Celona, 10:30 – 12:00 Uhr</dd></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ GÄSTELISTE ══ -->
+  <div id="tab-gaeste" class="tab">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+      <span style="font-size:1.1rem;font-weight:700">Gästeliste</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <div class="search-wrap" style="margin-bottom:0">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" id="g-search" placeholder="Suchen …" oninput="renderGuests()">
+        </div>
+        <button class="btn btn-p btn-sm" onclick="openGastModal()">+ Gast</button>
+      </div>
+    </div>
+    <div class="chips" id="g-chips">
+      <button class="chip active" onclick="setGF('alle',this)">Alle</button>
+      <button class="chip" onclick="setGF('Zugesagt',this)">Zugesagt</button>
+      <button class="chip" onclick="setGF('Eingeladen',this)">Eingeladen</button>
+      <button class="chip" onclick="setGF('Abgesagt',this)">Abgesagt</button>
+      <button class="chip" onclick="setGF('Liste',this)">Liste</button>
+    </div>
+    <div class="count-lbl" id="g-count"></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <button class="btn btn-s btn-sm" onclick="exportData()">⬇ Daten exportieren</button>
+      <label class="btn btn-s btn-sm" style="cursor:pointer">⬆ Importieren<input type="file" accept=".json" style="display:none" onchange="importData(this)"></label>
+      <button class="btn btn-s btn-sm" onclick="restoreAddresses()">📍 Adressen wiederherstellen</button>
+    </div>
+    <div id="g-list"></div>
+  </div>
+
+  <!-- ══ BUDGET ══ -->
+  <div id="tab-budget" class="tab">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <span style="font-size:1.1rem;font-weight:700">Budgetübersicht</span>
+    </div>
+    <div class="card" id="bud-summary"></div>
+
+    <!-- Desktop: table -->
+    <div class="bud-table-wrap card" style="padding:0;overflow:hidden">
+      <table class="bud-table">
+        <thead><tr>
+          <th>Kategorie</th><th>Geplant (€)</th><th>Ausgegeben (€)</th><th>Notiz</th>
+        </tr></thead>
+        <tbody id="bud-tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Mobile: cards -->
+    <div class="bud-card-list" id="bud-cards"></div>
+  </div>
+
+  <!-- ══ TO-DO ══ -->
+  <div id="tab-todo" class="tab">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <span style="font-size:1.1rem;font-weight:700">To-Do Liste</span>
+      <button class="btn btn-p btn-sm" onclick="toggleAddTodo()">+ Aufgabe</button>
+    </div>
+    <div class="chips" id="t-chips">
+      <button class="chip active" onclick="setTF('alle',this)">Alle</button>
+      <button class="chip" onclick="setTF('offen',this)">Offen</button>
+      <button class="chip" onclick="setTF('erledigt',this)">Erledigt</button>
+    </div>
+    <div class="count-lbl" id="t-count"></div>
+    <div class="card" id="add-todo-card" style="display:none;margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div>
+          <label style="font-size:.78rem;font-weight:600;color:var(--text-l);display:block;margin-bottom:4px">Aufgabe *</label>
+          <input type="text" id="new-todo-text" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:.9rem;font-family:inherit" placeholder="Was ist zu tun?">
+        </div>
+        <div>
+          <label style="font-size:.78rem;font-weight:600;color:var(--text-l);display:block;margin-bottom:4px">Verantwortlich</label>
+          <input type="text" id="new-todo-ver" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:.9rem;font-family:inherit" placeholder="Name">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-s btn-sm" onclick="toggleAddTodo()">Abbrechen</button>
+        <button class="btn btn-p btn-sm" onclick="addTodo()">Hinzufügen</button>
+      </div>
+    </div>
+    <div id="t-list"></div>
+  </div>
+
+  <!-- ══ ZEITPLAN & MEHR ══ -->
+  <div id="tab-mehr" class="tab">
+    <div class="mehr-grid">
+      <div>
+        <div class="section-lbl">🏛 Freitag, 04.09.2026 – Standesamt</div>
+        <div class="card" id="tl-fr"></div>
+        <div class="section-lbl" style="margin-top:18px">💒 Samstag, 05.09.2026 – Hochzeit</div>
+        <div class="card" id="tl-sa"></div>
+      </div>
+      <div>
+        <div class="section-lbl">🤝 Dienstleister</div>
+        <div id="dl-wrap"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+<!-- ══ MOBILE BOTTOM NAV ══ -->
+<nav id="bottom-nav">
+  <button class="nav-btn active" onclick="showTab('home',this,'bot')">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Übersicht
+  </button>
+  <button class="nav-btn" onclick="showTab('gaeste',this,'bot')">
+    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Gäste
+  </button>
+  <button class="nav-btn" onclick="showTab('budget',this,'bot')">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    Budget
+  </button>
+  <button class="nav-btn" onclick="showTab('todo',this,'bot')">
+    <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    To-Do
+  </button>
+  <button class="nav-btn" onclick="showTab('mehr',this,'bot')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+    Mehr
+  </button>
+</nav>
+</div><!-- /app -->
+
+<!-- ══ MODAL: Gast ══ -->
+<div id="gast-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center">
+  <div style="background:var(--white);border-radius:16px;padding:24px;width:min(460px,95vw);max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.18)">
+    <h2 style="font-size:1rem;margin-bottom:18px" id="gast-modal-title">Gast hinzufügen</h2>
+    <input type="hidden" id="gast-edit-id">
+    <div style="display:grid;grid-template-columns:1fr 80px;gap:10px;margin-bottom:10px">
+      <div><label class="fl">Name *</label><input type="text" id="gast-name" class="fi" placeholder="Name"></div>
+      <div><label class="fl">Pers.</label><input type="number" id="gast-pers" class="fi" min="1" value="1"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div><label class="fl">Status</label>
+        <select id="gast-status" class="fi"><option>Eingeladen</option><option>Zugesagt</option><option>Abgesagt</option><option>Liste</option></select></div>
+      <div><label class="fl">Gruppe</label>
+        <select id="gast-gruppe" class="fi">
+          <option>Freunde Paulina</option><option>Familie Paulina</option><option>Gemeinsame Freunde</option><option>Familie Jan</option><option>Freunde Jan</option><option>Brautpaar</option>
+        </select></div>
+    </div>
+    <div style="margin-bottom:10px"><label class="fl">Notiz / Adresse</label><input type="text" id="gast-notiz" class="fi" placeholder="Optional"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-s" onclick="closeGastModal()">Abbrechen</button>
+      <button class="btn btn-p" onclick="saveGast()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.fl{display:block;font-size:.78rem;font-weight:600;color:var(--text-l);margin-bottom:4px}
+.fi{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:.9rem;color:var(--text);background:var(--cream);font-family:inherit}
+.fi:focus{outline:none;border-color:var(--sage-l);background:var(--white)}
+</style>
+
+<script>
+'use strict';
+// ── Data ──────────────────────────────────────────────────────
+const INITIAL_DATA={hochzeit:{datum:'2026-09-05',standesamt:'2026-09-04',location:'Badsaal Schnaittach',braut:'Paulina',braeutigam:'Jan',budget:15000},gaeste:[{id:'g1',name:'Josephine Chan',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g2',name:'Jossy Giesbrecht',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g3',name:'Emily + Frank',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g4',name:'Ee Laine',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g5',name:'Joel',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g6',name:'Chendi',personen:1,status:'Abgesagt',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g7',name:'Alan + Lynn',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g8',name:'Saki',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g9',name:'Grace',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g10',name:'Liz + Silas',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g11',name:'Jo (Pheline)',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g12',name:'Simon + Thea',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g13',name:'Mali',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g14',name:'Nina',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g15',name:'Ravil & Maftuna',personen:2,status:'Abgesagt',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g16',name:'Josi',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g17',name:'Ida',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g18',name:'Lorenz',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:'Friedrichstraße 50'},{id:'g19',name:'Rebekkah',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g20',name:'Lennart',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g21',name:'Anabel',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g22',name:'Fabi + Julie',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g23',name:'Reini + Tanja',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g24',name:'Ede + Cathy',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g25',name:'Bernhard + Heike',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g26',name:'Conny + Helmfried',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g27',name:'Isa',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g28',name:'Nadine',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g29',name:'Basti',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g30',name:'Oma',personen:1,status:'Abgesagt',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g31',name:'Eltern + Finja',personen:3,status:'Eingeladen',gruppe:'Familie Paulina',tisch:'',notiz:''},{id:'g32',name:'Dankwart + Martina',personen:2,status:'Eingeladen',gruppe:'Familie Paulina',tisch:'',notiz:''},{id:'g33',name:'Franzi + Steffen + Baby',personen:2,status:'Eingeladen',gruppe:'Familie Paulina',tisch:'',notiz:''},{id:'g34',name:'Ethan + Paula',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g35',name:'Yeri',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g36',name:'Mimi',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g37',name:'Louis + Nadine',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g38',name:'Nick',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g39',name:'Raphi + Esther',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g40',name:'Robin + Claudette + Kind',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g41',name:'Rahel Ziegler',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g42',name:'Chris + Freundin',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g43',name:'Jakob',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g44',name:'Luisa',personen:1,status:'Abgesagt',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g45',name:'Mia',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g46',name:'Joshi',personen:1,status:'Abgesagt',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g47',name:'David + Pauline',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g48',name:'Eltern + Kai',personen:3,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g49',name:'Heike + Sven',personen:2,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g50',name:'Görge + Kinder',personen:3,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g51',name:'Sonja',personen:1,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g52',name:'Marlies + Albert',personen:2,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g53',name:'Arne',personen:1,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g54',name:'Waltraud + Norbert',personen:2,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g55',name:'Mai-Ly',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g56',name:'Jannis',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g57',name:'Jean',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g58',name:'Nick + Helene',personen:2,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g59',name:'Johann',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g60',name:'Ali',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g61',name:'Pablo',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g62',name:'Korbi',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g63',name:'Timo + Bekki',personen:2,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g64',name:'Flo',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g65',name:'Erik',personen:1,status:'Abgesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g66',name:'Jannis + Celine',personen:2,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:'Trauung nur?'},{id:'g67',name:'Hannes',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g68',name:'Ruben + Debby',personen:2,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g69',name:'Lukas',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g70',name:'Nico',personen:1,status:'Abgesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g71',name:'Karl',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g72',name:'Lucas + Caroline + Kinder',personen:5,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g73',name:'Markus & Daniela',personen:2,status:'Liste',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g74',name:'Max',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g75',name:'Bjarne',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g76',name:'Bene',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g77',name:'Elias',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g78',name:'Vero',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g79',name:'Gerrit',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g80',name:'Valentin',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g81',name:'Marie',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g82',name:'Paul',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g83',name:'Leon',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g84',name:'David Schnurr',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g85',name:'Jan + Paulina',personen:2,status:'Zugesagt',gruppe:'Brautpaar',tisch:'',notiz:''}],budget:{gesamtbudget:15000,kategorien:[{id:'b1',name:'Location',geschaetzt:0,tatsaechlich:0,notiz:'Badsaal Schnaittach – Vertrag unterschrieben'},{id:'b2',name:'Catering',geschaetzt:5778,tatsaechlich:0,notiz:'Grillmeister Pausch angefragt'},{id:'b3',name:'Getränke',geschaetzt:3000,tatsaechlich:0,notiz:''},{id:'b4',name:'Hochzeitstorte',geschaetzt:0,tatsaechlich:0,notiz:'Isa fragen'},{id:'b5',name:'Foto / Video',geschaetzt:500,tatsaechlich:0,notiz:''},{id:'b6',name:'Musik',geschaetzt:0,tatsaechlich:0,notiz:''},{id:'b7',name:'Ringe',geschaetzt:1217,tatsaechlich:1217,notiz:''},{id:'b8',name:'Kleidung',geschaetzt:1800,tatsaechlich:0,notiz:''},{id:'b9',name:'Brautstrauß',geschaetzt:0,tatsaechlich:0,notiz:''},{id:'b10',name:'Deko',geschaetzt:500,tatsaechlich:0,notiz:''},{id:'b11',name:'Trauungskosten',geschaetzt:200,tatsaechlich:0,notiz:''},{id:'b12',name:'Brunchen Standesamt',geschaetzt:240,tatsaechlich:0,notiz:''},{id:'b13',name:'Reserve',geschaetzt:1500,tatsaechlich:0,notiz:''},{id:'b14',name:'Sonstiges',geschaetzt:240,tatsaechlich:0,notiz:''}]},todos:[{id:'t1',text:'Einladung Gemeinde + Kuchen an Mimi',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Catering & Getränke'},{id:'t2',text:'Privat Leute wegen Kuchen anfragen',erledigt:false,verantwortlich:'',deadline:'',notiz:'Emails schreiben',kategorie:'Catering & Getränke'},{id:'t3',text:'Serviceteam Getränke Abend anfragen',erledigt:false,verantwortlich:'',deadline:'',notiz:'Danilo und Elias angefragt',kategorie:'Organisation'},{id:'t4',text:'Abspül- und Aufräumteam anfragen',erledigt:false,verantwortlich:'Jan Gehrke / Christine Gehrke',deadline:'',notiz:'',kategorie:'Organisation'},{id:'t5',text:'Aufräumteam für Badsaal',erledigt:false,verantwortlich:'Alex Schropp?',deadline:'',notiz:'',kategorie:'Organisation'},{id:'t6',text:'Abspülen Badsaal – nächster Tag?',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Organisation'},{id:'t7',text:'Übersetzer organisieren',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Zeremonie & Musik'},{id:'t8',text:'Sektempfang am Nachmittag klären',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Catering & Getränke'},{id:'t9',text:'Technik am Abend klären',erledigt:false,verantwortlich:'Medientechnik',deadline:'',notiz:'',kategorie:'Organisation'},{id:'t10',text:'Autos anfragen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Organisation'},{id:'t11',text:'Sitzordnung erstellen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Gäste'},{id:'t12',text:'Ringe bestellen',erledigt:true,verantwortlich:'',deadline:'',notiz:'',kategorie:'Persönliches'},{id:'t13',text:'Deko kaufen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Deko & Ausstattung'},{id:'t14',text:'Getränke kaufen',erledigt:false,verantwortlich:'Heinz',deadline:'',notiz:'Plan machen',kategorie:'Catering & Getränke'},{id:'t15',text:'Blumen bestellen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Deko & Ausstattung'},{id:'t16',text:'Brautstrauß bestellen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Deko & Ausstattung'},{id:'t17',text:'Standesamt Kleidung',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Kleidung'},{id:'t18',text:'Hochzeitstanz mit Kai absprechen',erledigt:false,verantwortlich:'Kai',deadline:'',notiz:'',kategorie:'Zeremonie & Musik'},{id:'t19',text:'Fotobox organisieren',erledigt:false,verantwortlich:'',deadline:'',notiz:'mit Polaroids',kategorie:'Deko & Ausstattung'},{id:'t20',text:'Gästebuch',erledigt:false,verantwortlich:'Helga',deadline:'',notiz:'',kategorie:'Deko & Ausstattung'},{id:'t21',text:'Gastgeschenke',erledigt:false,verantwortlich:'Helga',deadline:'',notiz:'',kategorie:'Deko & Ausstattung'},{id:'t22',text:'Achim nachhaken (Musikteam)',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Zeremonie & Musik'},{id:'t23',text:'Programm für Abend erstellen',erledigt:false,verantwortlich:'Papa',deadline:'',notiz:'An Papa geschickt',kategorie:'Zeremonie & Musik'},{id:'t24',text:'Ehevorbereitungskurs',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Persönliches'},{id:'t25',text:'Tanzkurs',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Persönliches'},{id:'t26',text:'Catering E-Mail abschicken',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Catering & Getränke'},{id:'t27',text:'Trautmode kaufen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Kleidung'},{id:'t28',text:'Schuhe kaufen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Kleidung'}],zeitplan:{freitag:[{id:'z1',zeit:'09:40',ende:'',titel:'Vor Ort sein',notiz:''},{id:'z2',zeit:'10:00',ende:'10:15',titel:'Standesamtliche Trauung',notiz:''},{id:'z3',zeit:'10:30',ende:'12:00',titel:'Brunchen – Cafe und Bar Celona',notiz:'Im Anschluss Standesamt'},{id:'z4',zeit:'16:40',ende:'',titel:'Fahrt des Brautpaares',notiz:''}],samstag:[{id:'z5',zeit:'12:30',ende:'12:40',titel:'Start / Einlass Gottesdienst',notiz:''},{id:'z6',zeit:'12:40',ende:'12:44',titel:'Einzug der Braut',notiz:'gratitude – instrumental, Piano'},{id:'z7',zeit:'12:44',ende:'12:50',titel:'Begrüßung + Hinführung',notiz:''},{id:'z8',zeit:'12:50',ende:'12:52',titel:'Gebet',notiz:''},{id:'z9',zeit:'12:52',ende:'12:56',titel:'Lied 1',notiz:'»So groß ist der Herr« – Chris Tomlin'},{id:'z10',zeit:'12:56',ende:'13:00',titel:'Sündenbekenntnis / Gebet',notiz:''},{id:'z11',zeit:'13:00',ende:'13:05',titel:'Lied 2',notiz:'»Bless the Lord, oh my soul«'},{id:'z12',zeit:'13:05',ende:'13:09',titel:'Textlesung',notiz:'Mimi oder Karl'},{id:'z13',zeit:'13:09',ende:'13:13',titel:'Lied 3',notiz:'»Thank you Jesus for the blood«'},{id:'z14',zeit:'13:13',ende:'13:33',titel:'Traupredigt',notiz:'Jan-Peter'},{id:'z15',zeit:'13:33',ende:'13:36',titel:'Musikalisches Zwischenspiel',notiz:''},{id:'z16',zeit:'13:36',ende:'13:49',titel:'Ehezeremonie',notiz:'Traufrage, Versprechen, Ringtausch, Segnung'},{id:'z17',zeit:'13:49',ende:'13:54',titel:'Grußwort & Informationen',notiz:''},{id:'z18',zeit:'13:58',ende:'14:05',titel:'Segenslied & Auszug des Brautpaares',notiz:'»Wenn ist mir wohl in dem Herrn«'},{id:'z19',zeit:'13:45',ende:'16:30',titel:'Kaffee / Kuchen / Sektempfang',notiz:'Torte 13:45 Uhr'},{id:'z20',zeit:'17:00',ende:'',titel:'Ankunft Badsaal Schnaittach',notiz:''},{id:'z21',zeit:'18:00',ende:'',titel:'Abendessen',notiz:''}]},dienstleister:[{id:'d1',kategorie:'Location',name:'Badsaal Schnaittach',kontakt:'',kosten:'',status:'Vertrag unterschrieben',notiz:'Türen zu 22:00 Uhr. Zehnertische. Klavier vorhanden.'},{id:'d2',kategorie:'Catering',name:'Grillmeister Pausch',kontakt:'',kosten:'225€ + 27,99€/Pers.',status:'Angefragt',notiz:''},{id:'d3',kategorie:'Catering',name:'Wahler Partyservice',kontakt:'',kosten:'ca. 6.500€',status:'Abgesagt',notiz:''},{id:'d4',kategorie:'Catering',name:'Gelbes Haus Partyservice',kontakt:'',kosten:'43€/Pers. + 710€',status:'Abgesagt',notiz:''},{id:'d5',kategorie:'Musik',name:'Nadine',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d6',kategorie:'Musik',name:'Rahel',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d7',kategorie:'Musik',name:'Christian',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d8',kategorie:'Musik',name:'Katherina',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d9',kategorie:'Musik',name:'Mirjam',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d10',kategorie:'Musik',name:'Clara',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d11',kategorie:'Musik',name:'Yeri',kontakt:'',kosten:'',status:'Angefragt',notiz:'Musikteam'},{id:'d12',kategorie:'Musik',name:'Achim',kontakt:'',kosten:'',status:'Angefragt',notiz:'Musikteamleitung – nachhaken!'},{id:'d13',kategorie:'Foto/Video',name:'Fotograf (offen)',kontakt:'',kosten:'500€ geplant',status:'Offen',notiz:''}],sitzplan:{tische:[]}};
+
+// ── State ──────────────────────────────────────────────────────
+// ── Adressen – immer auffüllen, nie überschreiben ────────────
+const ADRESSEN={
+  g10:'Grabettstraße 94, 57080 Siegen',
+  g18:'Friedrichstraße 50',
+  g43:'Grabettstraße 94, 57080 Siegen',
+  g49:'Eddelaker Straße 81, 25541 Brunsbüttel',
+  g50:'Röthenbachstraße 21, 91301 Forchheim',
+  g51:'Hirschkamp 28, 22846 Norderstedt',
+  g52:'Alsterring 5, 24558 Henstedt-Ulzburg',
+  g53:'Ebertallee 71, 38104 Braunschweig',
+  g54:'Spiekerhäuser Straße 21, 34125 Kassel',
+  g55:'Falkenberger Chaussee 56, 13053 Berlin',
+  g57:'Heinleinstraße 16, 90431 Nürnberg',
+  g58:'Königsbergerstraße 20, 97072 Würzburg',
+  g59:'F4 17, 68159 Mannheim',
+  g60:'Merkurweg 1, 90537 Feucht',
+  g61:'Novaragasse 5, 1020 Wien',
+  g62:'Hauptstraße 84, 90562 Heroldsberg',
+  g81:'Auf dem Lärchenberge 5, 30161 Hannover',
+  g82:'Heimstättenstraße 17b, 30659 Hannover'
+};
+function mergeAddresses(){
+  Object.entries(ADRESSEN).forEach(([id,addr])=>{
+    const g=ST.gaeste.find(x=>x.id===id);
+    if(g&&(!g.notiz||!g.notiz.trim()))g.notiz=addr;
+  });
+}
+function mergeNewGuests(){
+  INITIAL_DATA.gaeste.forEach(ig=>{
+    if(!ST.gaeste.find(g=>g.id===ig.id))ST.gaeste.push({...ig});
+  });
+}
+
+// ── JSONBin Konfiguration ─────────────────────────────────────
+// 1. Konto auf jsonbin.io erstellen (kostenlos)
+// 2. "+ Create Bin" → leeres {} eingeben → Bin-ID aus der URL kopieren
+// 3. Account → API Keys → Master Key kopieren
+const JB_ID  = '6a1ca0fbddf5aa59f77cf960';
+const JB_KEY = '$2a$10$k/M9F0eORfo71yAXhASLKuopYRmv4/sWP6NKNS78AmEsQzTHfh6Ai';
+const JB_URL = `https://api.jsonbin.io/v3/b/${JB_ID}`;
+const JB_HDR = {'Content-Type':'application/json','X-Master-Key':JB_KEY};
+const JB_OK  = JB_ID !== 'DEINE_BIN_ID'; // true sobald Keys eingetragen
+
+// ── State & Sync ──────────────────────────────────────────────
+const SK='hochzeit_data';
+let ST, _syncTimer=null, _syncing=false;
+
+function migrate(data){
+  if(!data.sitzplan)data.sitzplan={tische:[]};
+  data.todos.forEach(t=>{if(!t.kategorie)t.kategorie='Organisation';});
+  mergeNewGuests();
+  mergeAddresses();
+}
+
+async function loadState(){
+  let serverData=null, localData=null;
+  // JSONBin laden (falls konfiguriert)
+  if(JB_OK){
+    try{
+      const r=await fetch(JB_URL+'/latest',{headers:{'X-Master-Key':JB_KEY}});
+      if(r.ok){ const j=await r.json(); serverData=j.record; }
+    }catch{}
+  }
+  // localStorage als Fallback
+  const raw=localStorage.getItem(SK);
+  if(raw){try{localData=JSON.parse(raw);}catch{}}
+  // Neuere Version gewinnt
+  if(serverData?.gaeste){
+    const sv=serverData._v||0, lv=localData?._v||0;
+    ST=sv>=lv?serverData:localData;
+  } else {
+    ST=localData||JSON.parse(JSON.stringify(INITIAL_DATA));
+  }
+  migrate(ST);
+  localStorage.setItem(SK,JSON.stringify(ST));
+  if(JB_OK&&!serverData?.gaeste) _postToServer(); // Erstbefüllung
+}
+
+function saveState(){
+  ST._v=(ST._v||0)+1;
+  localStorage.setItem(SK,JSON.stringify(ST));
+  _postToServer();
+  renderHome();
+}
+
+async function _postToServer(){
+  if(!JB_OK)return;
+  try{
+    await fetch(JB_URL,{method:'PUT',headers:JB_HDR,body:JSON.stringify(ST)});
+    setSyncDot('ok');
+  }catch{ setSyncDot('err'); }
+}
+
+// Polling: alle 15s prüfen, nur wenn Tab sichtbar
+function startSync(){
+  _syncTimer=setInterval(async()=>{
+    if(!JB_OK||document.hidden||_syncing)return;
+    _syncing=true;
+    try{
+      const r=await fetch(JB_URL+'/latest',{headers:{'X-Master-Key':JB_KEY}});
+      if(!r.ok)return;
+      const srv=(await r.json()).record;
+      if(srv&&srv._v&&srv._v>(ST._v||0)){
+        ST=srv;
+        migrate(ST);
+        localStorage.setItem(SK,JSON.stringify(ST));
+        renderHome();
+        if(activeTab==='gaeste')renderGuests();
+        if(activeTab==='budget')renderBudget();
+        if(activeTab==='todo')renderTodos();
+        if(activeTab==='mehr')renderMehr();
+        setSyncDot('ok');
+      }
+    }catch{setSyncDot('err');}
+    finally{_syncing=false;}
+  },15000);
+}
+
+function setSyncDot(state){
+  const d=document.getElementById('sync-dot');if(!d)return;
+  if(!JB_OK){d.style.background='#c4943a';d.title='JSONBin-Keys noch nicht eingetragen';return;}
+  d.title={ok:'Synchronisiert ✓',err:'JSONBin nicht erreichbar'}[state]||'';
+  d.style.background={ok:'#6ba36e',err:'#c97a7a'}[state]||'#c4943a';
+}
+
+// ── Export / Import / Adressen wiederherstellen ───────────────
+function exportData(){
+  const blob=new Blob([JSON.stringify(ST,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='hochzeit-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+}
+function importData(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const imp=JSON.parse(ev.target.result);
+      if(!imp.gaeste||!imp.budget)throw new Error();
+      ST=imp;
+      if(!ST.sitzplan)ST.sitzplan={tische:[]};
+      mergeAddresses();
+      saveState();renderHome();renderGuests();
+      alert('Daten erfolgreich importiert!');
+    }catch{alert('Fehler beim Importieren – bitte gültige Backup-Datei wählen.');}
+  };
+  reader.readAsText(file);input.value='';
+}
+function restoreAddresses(){
+  let n=0;
+  Object.entries(ADRESSEN).forEach(([id,addr])=>{
+    const g=ST.gaeste.find(x=>x.id===id);
+    if(g&&(!g.notiz||!g.notiz.trim())){g.notiz=addr;n++;}
+  });
+  if(n>0){saveState();renderGuests();alert(n+' Adressen wiederhergestellt.');}
+  else alert('Alle Adressen sind bereits vorhanden.');
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmt(n){return Number(n).toLocaleString('de-DE');}
+const GC={'Brautpaar':'#c4943a','Freunde Paulina':'#c9897a','Familie Paulina':'#9b86bd','Gemeinsame Freunde':'#6aaa96','Familie Jan':'#7a9e7e','Freunde Jan':'#7a9abf'};
+function gc(g){return GC[g]||'#aaa';}
+function scls(s){return {Zugesagt:'b-z',Eingeladen:'b-e',Abgesagt:'b-a',Liste:'b-l'}[s]||'b-l';}
+function dlcls(s){return {'Zugesagt':'b-z','Vertrag unterschrieben':'b-z','Abgesagt':'b-a','Angefragt':'b-e','Offen':'b-l'}[s]||'b-l';}
+function uid(){return '_'+Math.random().toString(36).slice(2,9);}
+
+// ── Navigation ─────────────────────────────────────────────────
+let activeTab='home';
+function navigateTo(tabId, filter){
+  showTab(tabId, null, null);
+  if(!filter) return;
+  if(tabId==='gaeste'){
+    const chip=[...document.querySelectorAll('#g-chips .chip')]
+      .find(b=>b.getAttribute('onclick')?.includes("'"+filter+"'"));
+    if(chip) setGF(filter, chip);
+  }
+  if(tabId==='todo'){
+    const chip=[...document.querySelectorAll('#t-chips .chip')]
+      .find(b=>b.getAttribute('onclick')?.includes("'"+filter+"'"));
+    if(chip) setTF(filter, chip);
+  }
+}
+function showTab(id,btn,src){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  document.querySelectorAll('.nav-btn,.top-tab').forEach(b=>b.classList.remove('active'));
+  // activate matching buttons in both navs
+  document.querySelectorAll(`.nav-btn`).forEach(b=>{if(b.getAttribute('onclick')?.includes("'"+id+"'"))b.classList.add('active');});
+  document.querySelectorAll(`.top-tab`).forEach(b=>{if(b.getAttribute('onclick')?.includes("'"+id+"'"))b.classList.add('active');});
+  activeTab=id;
+  const c=document.getElementById('content');if(c)c.scrollTop=0;
+  if(id==='home')    renderHome();
+  if(id==='gaeste')  renderGuests();
+  if(id==='budget')  renderBudget();
+  if(id==='todo')    renderTodos();
+  if(id==='mehr')    renderMehr();
+}
+
+// ── Home ──────────────────────────────────────────────────────
+function renderHome(){
+  const h=new Date('2026-09-05'),t=new Date();t.setHours(0,0,0,0);
+  document.getElementById('cd').textContent=Math.ceil((h-t)/86400000);
+  const g=ST.gaeste;
+  document.getElementById('s-eing').textContent=g.filter(x=>x.status!=='Abgesagt').reduce((s,x)=>s+x.personen,0);
+  document.getElementById('s-zug').textContent=g.filter(x=>x.status==='Zugesagt').reduce((s,x)=>s+x.personen,0);
+  document.getElementById('s-abg').textContent=g.filter(x=>x.status==='Abgesagt').reduce((s,x)=>s+x.personen,0);
+  document.getElementById('s-open').textContent=ST.todos.filter(t=>!t.erledigt).length;
+  document.getElementById('s-done').textContent=ST.todos.filter(t=>t.erledigt).length;
+  const kat=ST.budget.kategorien,ges=ST.budget.gesamtbudget;
+  const aus=kat.reduce((s,k)=>s+(k.tatsaechlich||0),0);
+  const pct=Math.min((aus/ges)*100,100);
+  document.getElementById('s-budpct').textContent=Math.round(pct)+'%';
+  document.getElementById('s-budout').textContent=fmt(aus)+' €';
+  document.getElementById('s-budtot').textContent=fmt(ges)+' €';
+  document.getElementById('s-budrest').textContent=fmt(ges-aus)+' €';
+  const bar=document.getElementById('s-budbar');bar.style.width=pct+'%';bar.classList.toggle('over',aus>ges);
+}
+
+// ── Gäste ─────────────────────────────────────────────────────
+let GF='alle';
+function setGF(f,btn){GF=f;document.querySelectorAll('#g-chips .chip').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderGuests();}
+function renderGuests(){
+  const search=(document.getElementById('g-search')?.value||'').toLowerCase();
+  const filtered=ST.gaeste.filter(g=>(GF==='alle'||g.status===GF)&&(!search||g.name.toLowerCase().includes(search)||g.gruppe.toLowerCase().includes(search)));
+  const pers=filtered.reduce((s,g)=>s+g.personen,0);
+  document.getElementById('g-count').textContent=filtered.length+' Einträge · '+pers+' Personen';
+  const gruppen=['Brautpaar','Freunde Paulina','Familie Paulina','Gemeinsame Freunde','Familie Jan','Freunde Jan'];
+  let html='';
+  gruppen.forEach(grp=>{
+    const ing=filtered.filter(g=>g.gruppe===grp);if(!ing.length)return;
+    const p=ing.reduce((s,g)=>s+g.personen,0);
+    html+=`<div class="section-lbl">${grp} <span style="font-weight:400;text-transform:none">(${p} Pers.)</span></div>
+    <div class="card" style="padding:0 14px">`;
+    ing.forEach(g=>{
+      const sc=scls(g.status);
+      html+=`<div class="guest-item">
+        <span class="grp-dot" style="background:${gc(g.gruppe)}"></span>
+        <span class="guest-name">${e(g.name)}</span>
+        ${g.personen>1?`<span style="font-size:.75rem;color:var(--text-l)">${g.personen}P</span>`:''}
+        <span class="guest-note" style="display:none;font-size:.78rem;color:var(--text-l);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e(g.notiz)}</span>
+        <select class="${sc} status-sel" onchange="updGastSt('${g.id}',this)">
+          ${['Eingeladen','Zugesagt','Abgesagt','Liste'].map(s=>`<option${s===g.status?' selected':''}>${s}</option>`).join('')}
+        </select>
+        <button class="btn btn-d btn-sm" onclick="delGast('${g.id}')" style="padding:4px 8px;font-size:.75rem">✕</button>
+      </div>`;
+    });
+    html+='</div>';
+  });
+  document.getElementById('g-list').innerHTML=html||'<div class="empty">Keine Gäste gefunden.</div>';
+}
+function updGastSt(id,el){const g=ST.gaeste.find(x=>x.id===id);if(g){g.status=el.value;saveState();renderGuests();}}
+function delGast(id){if(!confirm('Gast löschen?'))return;ST.gaeste=ST.gaeste.filter(g=>g.id!==id);saveState();renderGuests();}
+function openGastModal(id){
+  const g=id?ST.gaeste.find(x=>x.id===id):null;
+  document.getElementById('gast-modal-title').textContent=g?'Gast bearbeiten':'Gast hinzufügen';
+  document.getElementById('gast-edit-id').value=id||'';
+  document.getElementById('gast-name').value=g?g.name:'';
+  document.getElementById('gast-pers').value=g?g.personen:1;
+  document.getElementById('gast-status').value=g?g.status:'Eingeladen';
+  document.getElementById('gast-gruppe').value=g?g.gruppe:'Freunde Paulina';
+  document.getElementById('gast-notiz').value=g?g.notiz:'';
+  document.getElementById('gast-modal').style.display='flex';
+}
+function closeGastModal(){document.getElementById('gast-modal').style.display='none';}
+function saveGast(){
+  const name=document.getElementById('gast-name').value.trim();
+  if(!name){alert('Bitte Namen eingeben.');return;}
+  const id=document.getElementById('gast-edit-id').value;
+  const data={name,personen:parseInt(document.getElementById('gast-pers').value)||1,status:document.getElementById('gast-status').value,gruppe:document.getElementById('gast-gruppe').value,tisch:'',notiz:document.getElementById('gast-notiz').value.trim()};
+  if(id){const g=ST.gaeste.find(x=>x.id===id);if(g)Object.assign(g,data);}else ST.gaeste.push({id:uid(),...data});
+  saveState();closeGastModal();renderGuests();
+}
+document.getElementById('gast-modal').addEventListener('click',ev=>{if(ev.target===ev.currentTarget)closeGastModal();});
+
+// ── Budget ────────────────────────────────────────────────────
+function renderBudget(){
+  const kat=ST.budget.kategorien,ges=ST.budget.gesamtbudget;
+  const gep=kat.reduce((s,k)=>s+(k.geschaetzt||0),0);
+  const aus=kat.reduce((s,k)=>s+(k.tatsaechlich||0),0);
+  const pct=Math.min((aus/ges)*100,100),over=aus>ges;
+  document.getElementById('bud-summary').innerHTML=`
+    <div class="card-title">💰 Budgetübersicht</div>
+    <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:4px">
+      <span>Geplant: <strong>${fmt(gep)} €</strong></span>
+      <span>Ausgegeben: <strong>${fmt(aus)} €</strong></span>
+    </div>
+    <div class="bud-bar-out"><div class="bud-bar-in${over?' over':''}" style="width:${pct}%"></div></div>
+    <div style="font-size:.8rem;color:var(--text-l);margin-top:4px">Gesamtbudget: <strong>${fmt(ges)} €</strong> · Verbleibend: <strong style="color:${over?'var(--rose-d)':'var(--sage-d)'}">${fmt(ges-aus)} €</strong></div>`;
+
+  // Desktop table
+  document.getElementById('bud-tbody').innerHTML=kat.map(k=>{
+    const o=k.tatsaechlich>0&&k.geschaetzt>0&&k.tatsaechlich>k.geschaetzt;
+    return`<tr>
+      <td><strong>${e(k.name)}</strong>${k.notiz?`<div style="font-size:.75rem;color:var(--text-l)">${e(k.notiz)}</div>`:''}
+      </td>
+      <td><input class="budget-input" type="number" min="0" value="${k.geschaetzt||''}" placeholder="0" onchange="updBud('${k.id}','geschaetzt',this.value)" style="max-width:110px"></td>
+      <td><input class="budget-input" type="number" min="0" value="${k.tatsaechlich||''}" placeholder="0" onchange="updBud('${k.id}','tatsaechlich',this.value)" style="max-width:110px;${o?'border-color:var(--rose);color:var(--rose-d)':''}"></td>
+      <td><input class="budget-input" value="${e(k.notiz)}" placeholder="–" onchange="updBud('${k.id}','notiz',this.value)"></td>
+    </tr>`;
+  }).join('');
+
+  // Mobile cards
+  let mhtml='';
+  kat.forEach(k=>{
+    const pK=k.geschaetzt>0?Math.min((k.tatsaechlich||0)/k.geschaetzt*100,100):0;
+    const oK=k.tatsaechlich>0&&k.geschaetzt>0&&k.tatsaechlich>k.geschaetzt;
+    mhtml+=`<div class="card" style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <strong>${e(k.name)}</strong>
+        <span style="font-size:.78rem;color:${oK?'var(--rose-d)':'var(--text-l)'}">${k.tatsaechlich?fmt(k.tatsaechlich)+'€':k.geschaetzt?'0 / '+fmt(k.geschaetzt)+'€':'–'}</span>
+      </div>
+      ${k.geschaetzt>0?`<div class="kat-mini-bar"><div class="kat-mini-fill${oK?' over':''}" style="width:${pK}%"></div></div>`:''}
+      ${k.notiz?`<div style="font-size:.73rem;color:var(--text-l);margin-top:4px">${e(k.notiz)}</div>`:''}
+    </div>`;
+  });
+  document.getElementById('bud-cards').innerHTML=mhtml;
+}
+function updBud(id,field,val){
+  const k=ST.budget.kategorien.find(x=>x.id===id);if(!k)return;
+  k[field]=field==='notiz'?val:(parseFloat(val)||0);saveState();renderBudget();
+}
+
+// ── To-Do ─────────────────────────────────────────────────────
+let TF='alle';
+function setTF(f,btn){TF=f;document.querySelectorAll('#t-chips .chip').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderTodos();}
+function renderTodos(){
+  const todos=ST.todos.filter(t=>TF==='alle'||(TF==='offen'&&!t.erledigt)||(TF==='erledigt'&&t.erledigt));
+  document.getElementById('t-count').textContent=`${ST.todos.filter(t=>!t.erledigt).length} offen · ${ST.todos.filter(t=>t.erledigt).length} erledigt`;
+  const kats=['Catering & Getränke','Zeremonie & Musik','Deko & Ausstattung','Kleidung','Organisation','Gäste','Persönliches'];
+  let html='';
+  kats.forEach(kat=>{
+    const ink=todos.filter(t=>(t.kategorie||'Organisation')===kat);if(!ink.length)return;
+    html+=`<div class="todo-kat-lbl">${kat}</div><div class="card" style="padding:0 14px;margin-bottom:10px">`;
+    ink.forEach(t=>{
+      html+=`<div class="todo-item">
+        <input type="checkbox" class="todo-cb" ${t.erledigt?'checked':''} onchange="togTodo('${t.id}')">
+        <div class="todo-body">
+          <div class="todo-txt${t.erledigt?' done':''}">${e(t.text)}</div>
+          <div class="todo-meta">${t.verantwortlich?'👤 '+e(t.verantwortlich):''}${t.notiz?' · 💬 '+e(t.notiz):''}</div>
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          <button class="btn btn-s btn-sm" onclick="openTodoEdit('${t.id}')" style="padding:4px 8px;font-size:.75rem">✏</button>
+          <button class="btn btn-d btn-sm" onclick="delTodo('${t.id}')" style="padding:4px 8px;font-size:.75rem">✕</button>
+        </div>
+      </div>`;
+    });
+    html+='</div>';
+  });
+  document.getElementById('t-list').innerHTML=html||'<div class="empty">Keine Aufgaben.</div>';
+}
+function togTodo(id){const t=ST.todos.find(x=>x.id===id);if(t){t.erledigt=!t.erledigt;saveState();renderTodos();}}
+function delTodo(id){if(!confirm('Aufgabe löschen?'))return;ST.todos=ST.todos.filter(t=>t.id!==id);saveState();renderTodos();}
+
+// ── Todo bearbeiten ────────────────────────────────────────────
+const TODO_KATS=['Catering & Getränke','Zeremonie & Musik','Deko & Ausstattung','Kleidung','Organisation','Gäste','Persönliches'];
+function openTodoEdit(id){
+  const t=ST.todos.find(x=>x.id===id);if(!t)return;
+  document.getElementById('te-id').value=id;
+  document.getElementById('te-text').value=t.text;
+  document.getElementById('te-ver').value=t.verantwortlich||'';
+  document.getElementById('te-deadline').value=t.deadline||'';
+  document.getElementById('te-notiz').value=t.notiz||'';
+  document.getElementById('te-kat').value=t.kategorie||'Organisation';
+  document.getElementById('todo-edit-modal').style.display='flex';
+  setTimeout(()=>document.getElementById('te-text').focus(),50);
+}
+function closeTodoEdit(){document.getElementById('todo-edit-modal').style.display='none';}
+function saveTodoEdit(){
+  const id=document.getElementById('te-id').value;
+  const t=ST.todos.find(x=>x.id===id);if(!t)return;
+  t.text=document.getElementById('te-text').value.trim()||t.text;
+  t.verantwortlich=document.getElementById('te-ver').value.trim();
+  t.deadline=document.getElementById('te-deadline').value;
+  t.notiz=document.getElementById('te-notiz').value.trim();
+  t.kategorie=document.getElementById('te-kat').value;
+  saveState();closeTodoEdit();renderTodos();
+}
+function toggleAddTodo(){
+  const c=document.getElementById('add-todo-card');
+  c.style.display=c.style.display==='none'?'block':'none';
+  if(c.style.display==='block')document.getElementById('new-todo-text').focus();
+}
+function addTodo(){
+  const txt=document.getElementById('new-todo-text').value.trim();if(!txt){alert('Bitte Aufgabe eingeben.');return;}
+  ST.todos.push({id:uid(),text:txt,erledigt:false,verantwortlich:document.getElementById('new-todo-ver').value.trim(),deadline:'',notiz:'',kategorie:'Organisation'});
+  saveState();document.getElementById('new-todo-text').value='';document.getElementById('new-todo-ver').value='';
+  document.getElementById('add-todo-card').style.display='none';renderTodos();
+}
+
+// ── Mehr ──────────────────────────────────────────────────────
+function renderMehr(){
+  document.getElementById('tl-fr').innerHTML=ST.zeitplan.freitag.map(z=>`
+    <div class="tl-item">
+      <div class="tl-time">${z.ende?z.zeit+' – '+z.ende:z.zeit}</div>
+      <div><div class="tl-titel">${e(z.titel)}</div>${z.notiz?`<div class="tl-notiz">${e(z.notiz)}</div>`:''}</div>
+    </div>`).join('');
+  const sa=[...ST.zeitplan.samstag].sort((a,b)=>a.zeit.localeCompare(b.zeit));
+  document.getElementById('tl-sa').innerHTML=sa.map(z=>`
+    <div class="tl-item">
+      <div class="tl-time">${z.ende?z.zeit+' – '+z.ende:z.zeit}</div>
+      <div><div class="tl-titel">${e(z.titel)}</div>${z.notiz?`<div class="tl-notiz">${e(z.notiz)}</div>`:''}</div>
+    </div>`).join('');
+  const kats=['Location','Catering','Musik','Foto/Video'];
+  let html='';
+  kats.forEach(kat=>{
+    const items=ST.dienstleister.filter(d=>d.kategorie===kat);if(!items.length)return;
+    html+=`<div class="section-lbl">${kat}</div><div class="card" style="padding:0 14px">`;
+    items.forEach(d=>{
+      html+=`<div class="dl-item">
+        <div class="dl-top"><span class="dl-name">${e(d.name)}</span><span class="badge ${dlcls(d.status)}">${e(d.status)}</span></div>
+        ${d.kosten?`<div class="dl-detail">💰 ${e(d.kosten)}</div>`:''}
+        ${d.notiz?`<div class="dl-detail">${e(d.notiz)}</div>`:''}
+      </div>`;
+    });
+    html+='</div>';
+  });
+  document.getElementById('dl-wrap').innerHTML=html;
+}
+
+// ── Init ──────────────────────────────────────────────────────
+loadState().then(()=>{ renderHome(); startSync(); });
+</script>
+
+<!-- ══ MODAL: Todo bearbeiten ══ -->
+<div id="todo-edit-modal" onclick="if(event.target===this)closeTodoEdit()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center">
+  <div style="background:var(--white);border-radius:16px;padding:24px;width:min(460px,95vw);max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.18)">
+    <h2 style="font-size:1rem;margin-bottom:18px">Aufgabe bearbeiten</h2>
+    <input type="hidden" id="te-id">
+    <div style="margin-bottom:12px">
+      <label class="fl">Aufgabe *</label>
+      <input type="text" id="te-text" class="fi" placeholder="Was ist zu tun?">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div><label class="fl">Kategorie</label>
+        <select id="te-kat" class="fi">
+          <option>Catering &amp; Getränke</option><option>Zeremonie &amp; Musik</option>
+          <option>Deko &amp; Ausstattung</option><option>Kleidung</option>
+          <option>Organisation</option><option>Gäste</option><option>Persönliches</option>
+        </select>
+      </div>
+      <div><label class="fl">Verantwortlich</label>
+        <input type="text" id="te-ver" class="fi" placeholder="Name">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div><label class="fl">Deadline</label>
+        <input type="date" id="te-deadline" class="fi">
+      </div>
+      <div><label class="fl">Notiz</label>
+        <input type="text" id="te-notiz" class="fi" placeholder="Optional">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-s" onclick="closeTodoEdit()">Abbrechen</button>
+      <button class="btn btn-p" onclick="saveTodoEdit()">Speichern</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
