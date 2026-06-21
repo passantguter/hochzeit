@@ -310,6 +310,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
   <div id="tab-budget" class="tab">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
       <span style="font-size:1.1rem;font-weight:700">Budgetübersicht</span>
+      <button class="btn btn-p btn-sm" onclick="openAddBudModal()">+ Ausgabe hinzufügen</button>
     </div>
     <div class="card" id="bud-summary"></div>
 
@@ -731,11 +732,11 @@ function renderBudget(){
   document.getElementById('bud-tbody').innerHTML=kat.map(k=>{
     const o=k.tatsaechlich>0&&k.geschaetzt>0&&k.tatsaechlich>k.geschaetzt;
     return`<tr>
-      <td><strong>${e(k.name)}</strong>${k.notiz?`<div style="font-size:.75rem;color:var(--text-l)">${e(k.notiz)}</div>`:''}
-      </td>
+      <td><strong>${e(k.name)}</strong></td>
       <td><input class="budget-input" type="number" min="0" value="${k.geschaetzt||''}" placeholder="0" onchange="updBud('${k.id}','geschaetzt',this.value)" style="max-width:110px"></td>
       <td><input class="budget-input" type="number" min="0" value="${k.tatsaechlich||''}" placeholder="0" onchange="updBud('${k.id}','tatsaechlich',this.value)" style="max-width:110px;${o?'border-color:var(--rose);color:var(--rose-d)':''}"></td>
       <td><input class="budget-input" value="${e(k.notiz)}" placeholder="–" onchange="updBud('${k.id}','notiz',this.value)"></td>
+      <td><button class="btn btn-d btn-sm" onclick="delBudKat('${k.id}')" style="padding:4px 8px;font-size:.75rem">✕</button></td>
     </tr>`;
   }).join('');
 
@@ -758,6 +759,18 @@ function renderBudget(){
 function updBud(id,field,val){
   const k=ST.budget.kategorien.find(x=>x.id===id);if(!k)return;
   k[field]=field==='notiz'?val:(parseFloat(val)||0);saveState();renderBudget();
+}
+function openAddBudModal(){document.getElementById('add-bud-modal').style.display='flex';setTimeout(()=>document.getElementById('ab-name').focus(),50);}
+function closeAddBudModal(){document.getElementById('add-bud-modal').style.display='none';['ab-name','ab-gep','ab-aus','ab-notiz'].forEach(id=>{document.getElementById(id).value='';});}
+function addBudKat(){
+  const name=document.getElementById('ab-name').value.trim();
+  if(!name){alert('Bitte Bezeichnung eingeben.');return;}
+  ST.budget.kategorien.push({id:uid(),name,geschaetzt:parseFloat(document.getElementById('ab-gep').value)||0,tatsaechlich:parseFloat(document.getElementById('ab-aus').value)||0,notiz:document.getElementById('ab-notiz').value.trim()});
+  saveState();closeAddBudModal();renderBudget();
+}
+function delBudKat(id){
+  if(!confirm('Kategorie löschen?'))return;
+  ST.budget.kategorien=ST.budget.kategorien.filter(k=>k.id!==id);saveState();renderBudget();
 }
 
 // ── To-Do ─────────────────────────────────────────────────────
@@ -860,6 +873,29 @@ function renderMehr(){
 // ── Init ──────────────────────────────────────────────────────
 loadState().then(()=>{ renderHome(); startSync(); });
 </script>
+
+<!-- ══ MODAL: Ausgabe hinzufügen ══ -->
+<div id="add-bud-modal" onclick="if(event.target===this)closeAddBudModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center">
+  <div style="background:var(--white);border-radius:16px;padding:24px;width:min(420px,95vw);box-shadow:0 20px 60px rgba(0,0,0,.18)">
+    <h2 style="font-size:1rem;margin-bottom:18px">Ausgabe hinzufügen</h2>
+    <div style="margin-bottom:12px">
+      <label class="fl">Bezeichnung *</label>
+      <input type="text" id="ab-name" class="fi" placeholder="z. B. Blumen">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div><label class="fl">Geplant (€)</label><input type="number" id="ab-gep" class="fi" min="0" step="1" placeholder="0"></div>
+      <div><label class="fl">Ausgegeben (€)</label><input type="number" id="ab-aus" class="fi" min="0" step="1" placeholder="0"></div>
+    </div>
+    <div style="margin-bottom:16px">
+      <label class="fl">Notiz</label>
+      <input type="text" id="ab-notiz" class="fi" placeholder="Optional">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-s" onclick="closeAddBudModal()">Abbrechen</button>
+      <button class="btn btn-p" onclick="addBudKat()">Hinzufügen</button>
+    </div>
+  </div>
+</div>
 
 <!-- ══ MODAL: Todo bearbeiten ══ -->
 <div id="todo-edit-modal" onclick="if(event.target===this)closeTodoEdit()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center">
