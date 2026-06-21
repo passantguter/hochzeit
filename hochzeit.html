@@ -64,6 +64,43 @@ html,body{height:100%;background:var(--bg);color:var(--text);
   font-size:.88rem;color:var(--text);background:var(--cream)}
 .budget-input:focus{outline:none;border-color:var(--sage-l);background:var(--white)}
 
+/* Sitzplan */
+.sitzplan-stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.sitzplan-stat-pill{background:var(--cream);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:.85rem;display:flex;align-items:center;gap:6px}
+.sitzplan-stat-pill strong{color:var(--sage-d)}
+.sitzplan-layout{display:flex;gap:18px;align-items:flex-start}
+.tisch-grid{flex:1;display:flex;flex-wrap:wrap;gap:24px;align-content:flex-start}
+.tisch-visual-wrap{display:inline-flex;flex-direction:column;align-items:center;gap:4px;padding:10px;background:var(--cream);border:1px solid var(--border);border-radius:14px;transition:box-shadow .15s}
+.tisch-visual-wrap:hover{box-shadow:0 6px 20px var(--shadow-m)}
+.tisch-seats-top,.tisch-seats-bottom{display:flex;gap:5px;align-items:center}
+.tisch-middle-row{display:flex;gap:5px;align-items:stretch}
+.tisch-seats-side{display:flex;flex-direction:column;gap:5px;justify-content:center}
+.tisch-surface{background:linear-gradient(160deg,#fffef9,#f5efe4);border:3px solid var(--sage);border-radius:6px;width:170px;min-height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 14px;gap:3px}
+.tisch-surface.over{border-color:var(--rose)}
+.tisch-surface-name{font-size:1rem;font-weight:600;color:var(--text);text-align:center}
+.tisch-surface-cap{font-size:.72rem;color:var(--text-l);font-weight:600}
+.tisch-surface-cap.over{color:var(--rose-d)}
+.tisch-seat{width:30px;height:30px;border-radius:50%;background:#f0ebe4;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;color:var(--text-l);flex-shrink:0;transition:transform .15s,box-shadow .15s;user-select:none}
+.tisch-seat.belegt{color:#fff;border-color:transparent;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.tisch-seat.belegt:hover{transform:scale(1.18);box-shadow:0 3px 10px rgba(0,0,0,.22)}
+.tisch-visual-footer{display:flex;gap:6px;margin-top:4px}
+.unassigned-panel{width:230px;flex-shrink:0;background:var(--cream);border:1px solid var(--border);border-radius:14px;padding:14px;position:sticky;top:80px;max-height:calc(100vh - 120px);overflow-y:auto}
+.unassigned-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.unassigned-title{font-weight:600;font-size:.95rem}
+.unassigned-count-badge{background:#fce4e4;color:var(--rose-d);font-size:.72rem;font-weight:700;border-radius:10px;padding:2px 8px}
+.unassigned-guest{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f0ebe4;font-size:.85rem}
+.unassigned-guest:last-child{border-bottom:none}
+.unassigned-guest-gruppe{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.unassigned-guest-name{flex:1;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.assign-guest-list{max-height:340px;overflow-y:auto}
+.assign-guest-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0ebe4;cursor:pointer;font-size:.88rem}
+.assign-guest-item:last-child{border-bottom:none}
+.assign-guest-item:hover{background:#f5f0eb;margin:0 -4px;padding-left:4px;padding-right:4px;border-radius:6px}
+.assign-guest-color{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.assign-guest-name{font-weight:600;flex:1}
+.assign-guest-gruppe{font-size:.78rem;color:var(--text-l)}
+@media(max-width:767px){.sitzplan-layout{flex-direction:column}.unassigned-panel{width:100%;position:static;max-height:none}}
+
 /* Timeline */
 .tl-item{display:flex;gap:14px;padding:10px 0;border-bottom:1px solid #f0ebe4}
 .tl-item:last-child{border-bottom:none}
@@ -223,6 +260,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
       <button class="top-tab" onclick="showTab('gaeste',this,'top')">Gästeliste</button>
       <button class="top-tab" onclick="showTab('budget',this,'top')">Budget</button>
       <button class="top-tab" onclick="showTab('todo',this,'top')">To-Do</button>
+      <button class="top-tab" onclick="showTab('sitzplan',this,'top')">Sitzplan</button>
       <button class="top-tab" onclick="showTab('mehr',this,'top')">Zeitplan &amp; Mehr</button>
     </div>
   </div>
@@ -359,6 +397,27 @@ html,body{height:100%;background:var(--bg);color:var(--text);
     <div id="t-list"></div>
   </div>
 
+  <!-- ══ SITZPLAN ══ -->
+  <div id="tab-sitzplan" class="tab">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <span style="font-size:1.1rem;font-weight:700">Sitzplan</span>
+      <button class="btn btn-p btn-sm" onclick="openAddTischModal()">+ Tisch hinzufügen</button>
+    </div>
+    <div class="sitzplan-stats" id="sitzplan-stats"></div>
+    <div class="sitzplan-layout">
+      <div class="tisch-grid" id="tisch-grid"></div>
+      <div class="unassigned-panel">
+        <div class="unassigned-header">
+          <span class="unassigned-title">Nicht zugewiesen</span>
+          <span id="unassigned-count" class="unassigned-count-badge"></span>
+        </div>
+        <input type="text" id="unassigned-search" placeholder="Gast suchen …" oninput="renderUnassigned()"
+          style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:.85rem;margin-bottom:10px;font-family:inherit">
+        <div id="unassigned-list"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ══ ZEITPLAN & MEHR ══ -->
   <div id="tab-mehr" class="tab">
     <div class="mehr-grid">
@@ -394,6 +453,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);
   <button class="nav-btn" onclick="showTab('todo',this,'bot')">
     <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
     To-Do
+  </button>
+  <button class="nav-btn" onclick="showTab('sitzplan',this,'bot')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Sitzplan
   </button>
   <button class="nav-btn" onclick="showTab('mehr',this,'bot')">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
@@ -630,11 +693,12 @@ function showTab(id,btn,src){
   document.querySelectorAll(`.top-tab`).forEach(b=>{if(b.getAttribute('onclick')?.includes("'"+id+"'"))b.classList.add('active');});
   activeTab=id;
   const c=document.getElementById('content');if(c)c.scrollTop=0;
-  if(id==='home')    renderHome();
-  if(id==='gaeste')  renderGuests();
-  if(id==='budget')  renderBudget();
-  if(id==='todo')    renderTodos();
-  if(id==='mehr')    renderMehr();
+  if(id==='home')     renderHome();
+  if(id==='gaeste')   renderGuests();
+  if(id==='budget')   renderBudget();
+  if(id==='todo')     renderTodos();
+  if(id==='sitzplan') renderSitzplan();
+  if(id==='mehr')     renderMehr();
 }
 
 // ── Home ──────────────────────────────────────────────────────
@@ -840,6 +904,125 @@ function addTodo(){
   document.getElementById('add-todo-card').style.display='none';renderTodos();
 }
 
+// ── Sitzplan ──────────────────────────────────────────────────
+function renderSitzplan(){renderSitzplanStats();renderTischGrid();renderUnassigned();}
+
+function renderSitzplanStats(){
+  const tische=ST.sitzplan.tische;
+  const allGuests=ST.gaeste.filter(g=>g.status!=='Abgesagt');
+  const assigned=allGuests.filter(g=>g.tisch&&g.tisch.trim()!=='');
+  const unassigned=allGuests.filter(g=>!g.tisch||g.tisch.trim()==='');
+  const totalSeats=tische.reduce((s,t)=>s+t.kapazitaet,0);
+  const usedSeats=assigned.reduce((s,g)=>s+g.personen,0);
+  const freeSeats=totalSeats-usedSeats;
+  document.getElementById('sitzplan-stats').innerHTML=`
+    <div class="sitzplan-stat-pill">🪑 <strong>${usedSeats}</strong> Personen zugewiesen</div>
+    <div class="sitzplan-stat-pill">👤 <strong>${unassigned.reduce((s,g)=>s+g.personen,0)}</strong> noch ohne Tisch</div>
+    <div class="sitzplan-stat-pill">✅ <strong>${freeSeats>=0?freeSeats:0}</strong> freie Plätze</div>
+    <div class="sitzplan-stat-pill">🍽 <strong>${tische.length}</strong> Tische</div>`;
+}
+
+function renderTischGrid(){
+  const container=document.getElementById('tisch-grid');
+  let html='';
+  ST.sitzplan.tische.forEach(tisch=>{
+    const guests=ST.gaeste.filter(g=>g.tisch===tisch.name&&g.status!=='Abgesagt');
+    const usedSeats=guests.reduce((s,g)=>s+g.personen,0);
+    const isOver=usedSeats>tisch.kapazitaet;
+    const totalSeats=Math.max(tisch.kapazitaet,usedSeats);
+    const seats=[];
+    guests.forEach(g=>{for(let i=0;i<g.personen;i++)seats.push({name:g.name,color:gc(g.gruppe),id:g.id,gruppe:g.gruppe});});
+    while(seats.length<totalSeats)seats.push(null);
+    const leftCount=2,topCount=Math.ceil((totalSeats-leftCount*2)/2),botCount=totalSeats-leftCount*2-topCount;
+    const topSeats=seats.slice(0,topCount),botSeats=seats.slice(topCount,topCount+botCount);
+    const leftSeats=seats.slice(topCount+botCount,topCount+botCount+leftCount),rightSeats=seats.slice(topCount+botCount+leftCount);
+    function rSeat(s){
+      if(!s)return`<div class="tisch-seat" title="Freier Platz"></div>`;
+      const ini=s.name.split(/[\s+&]/)[0].slice(0,3);
+      return`<div class="tisch-seat belegt" style="background:${s.color}" title="${e(s.name)} · ${e(s.gruppe)}&#10;Klicken zum Entfernen" onclick="removeGastFromTisch('${s.id}')">${e(ini)}</div>`;
+    }
+    html+=`<div class="tisch-visual-wrap">
+      <div class="tisch-seats-top">${topSeats.map(rSeat).join('')}</div>
+      <div class="tisch-middle-row">
+        <div class="tisch-seats-side">${leftSeats.map(rSeat).join('')}</div>
+        <div class="tisch-surface${isOver?' over':''}">
+          <span class="tisch-surface-name">${e(tisch.name)}</span>
+          <span class="tisch-surface-cap${isOver?' over':''}">${usedSeats}/${tisch.kapazitaet} Plätze</span>
+        </div>
+        <div class="tisch-seats-side">${rightSeats.map(rSeat).join('')}</div>
+      </div>
+      <div class="tisch-seats-bottom">${botSeats.map(rSeat).join('')}</div>
+      <div class="tisch-visual-footer">
+        <button class="btn btn-p btn-sm" onclick="openTischAssignModal('${e(tisch.name)}')">+ Gast</button>
+        <button class="btn btn-d btn-sm" onclick="deleteTisch('${tisch.id}')">✕</button>
+      </div>
+    </div>`;
+  });
+  container.innerHTML=html||'<p style="color:var(--text-l);padding:20px 0">Noch keine Tische angelegt.</p>';
+}
+
+function renderUnassigned(){
+  const search=(document.getElementById('unassigned-search')?.value||'').toLowerCase();
+  const unassigned=ST.gaeste.filter(g=>g.status!=='Abgesagt'&&(!g.tisch||g.tisch.trim()==='')&&(!search||g.name.toLowerCase().includes(search)||g.gruppe.toLowerCase().includes(search)));
+  const total=ST.gaeste.filter(g=>g.status!=='Abgesagt'&&(!g.tisch||g.tisch.trim()==='')).reduce((s,g)=>s+g.personen,0);
+  const badge=document.getElementById('unassigned-count');if(badge)badge.textContent=total>0?total+' Pers.':'';
+  const container=document.getElementById('unassigned-list');if(!container)return;
+  if(!unassigned.length){container.innerHTML='<p style="font-size:.82rem;color:var(--text-l);text-align:center;padding:12px 0">Alle Gäste zugewiesen! 🎉</p>';return;}
+  container.innerHTML=unassigned.map(g=>`<div class="unassigned-guest">
+    <span class="unassigned-guest-gruppe" style="background:${gc(g.gruppe)}" title="${e(g.gruppe)}"></span>
+    <span class="unassigned-guest-name" title="${e(g.gruppe)}">${e(g.name)}</span>
+    <span style="font-size:.75rem;color:var(--text-l)">${g.personen>1?g.personen+'P':''}</span>
+  </div>`).join('');
+}
+
+let assignTischName='';
+function openTischAssignModal(tischName){
+  assignTischName=tischName;
+  document.getElementById('tisch-assign-title').textContent='Gast zuweisen → '+tischName;
+  document.getElementById('tisch-assign-name').value=tischName;
+  document.getElementById('tisch-assign-search').value='';
+  filterAssignList();
+  document.getElementById('tisch-assign-modal').style.display='flex';
+}
+function closeTischAssignModal(){document.getElementById('tisch-assign-modal').style.display='none';renderSitzplan();}
+function filterAssignList(){
+  const tischName=document.getElementById('tisch-assign-name').value;
+  const search=document.getElementById('tisch-assign-search').value.toLowerCase();
+  const unassigned=ST.gaeste.filter(g=>g.status!=='Abgesagt'&&(!g.tisch||g.tisch.trim()==='')&&(!search||g.name.toLowerCase().includes(search)||g.gruppe.toLowerCase().includes(search)));
+  const container=document.getElementById('tisch-assign-list');
+  if(!unassigned.length){container.innerHTML='<p style="color:var(--text-l);padding:12px 0;text-align:center;font-size:.88rem">Keine nicht zugewiesenen Gäste gefunden.</p>';return;}
+  container.innerHTML=unassigned.map(g=>`<div class="assign-guest-item" onclick="assignGastToTisch('${g.id}','${e(tischName)}')">
+    <span class="assign-guest-color" style="background:${gc(g.gruppe)}"></span>
+    <span class="assign-guest-name">${e(g.name)}</span>
+    <span class="assign-guest-gruppe">${e(g.gruppe)}</span>
+    ${g.personen>1?`<span style="font-size:.75rem;font-weight:700;color:var(--rose-d)">${g.personen} Pers.</span>`:''}
+  </div>`).join('');
+}
+function assignGastToTisch(gastId,tischName){
+  const g=ST.gaeste.find(x=>x.id===gastId);if(!g)return;
+  if(g.tisch&&g.tisch.trim()!==''&&g.tisch!==tischName){alert(`${g.name} sitzt bereits an „${g.tisch}".`);return;}
+  g.tisch=tischName;saveState();filterAssignList();renderSitzplanStats();renderTischGrid();renderUnassigned();
+}
+function removeGastFromTisch(gastId){
+  const g=ST.gaeste.find(x=>x.id===gastId);if(!g)return;
+  g.tisch='';saveState();renderSitzplan();
+}
+function openAddTischModal(){document.getElementById('new-tisch-name').value='';document.getElementById('new-tisch-kap').value='10';document.getElementById('add-tisch-modal').style.display='flex';}
+function closeAddTischModal(){document.getElementById('add-tisch-modal').style.display='none';}
+function saveTisch(){
+  const name=document.getElementById('new-tisch-name').value.trim();
+  if(!name){alert('Bitte Tischnamen eingeben.');return;}
+  ST.sitzplan.tische.push({id:uid(),name,kapazitaet:parseInt(document.getElementById('new-tisch-kap').value)||10});
+  saveState();closeAddTischModal();renderSitzplan();
+}
+function deleteTisch(id){
+  const t=ST.sitzplan.tische.find(x=>x.id===id);if(!t)return;
+  const guests=ST.gaeste.filter(g=>g.tisch===t.name);
+  if(guests.length>0){if(!confirm(`Tisch „${t.name}" löschen? ${guests.length} zugewiesene Gäste werden freigegeben.`))return;guests.forEach(g=>{g.tisch='';});}
+  else{if(!confirm(`Tisch „${t.name}" wirklich löschen?`))return;}
+  ST.sitzplan.tische=ST.sitzplan.tische.filter(x=>x.id!==id);saveState();renderSitzplan();
+}
+
 // ── Mehr ──────────────────────────────────────────────────────
 function renderMehr(){
   document.getElementById('tl-fr').innerHTML=ST.zeitplan.freitag.map(z=>`
@@ -873,6 +1056,35 @@ function renderMehr(){
 // ── Init ──────────────────────────────────────────────────────
 loadState().then(()=>{ renderHome(); startSync(); });
 </script>
+
+<!-- ══ MODAL: Sitzplan – Gast zuweisen ══ -->
+<div id="tisch-assign-modal" onclick="if(event.target===this)closeTischAssignModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center">
+  <div style="background:var(--white);border-radius:16px;padding:24px;width:min(420px,95vw);max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.18)">
+    <h2 style="font-size:1rem;margin-bottom:14px" id="tisch-assign-title">Gast zuweisen</h2>
+    <input type="hidden" id="tisch-assign-name">
+    <input type="text" id="tisch-assign-search" placeholder="Gast suchen …" oninput="filterAssignList()"
+      style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:.9rem;font-family:inherit;margin-bottom:12px">
+    <div id="tisch-assign-list" class="assign-guest-list"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:14px">
+      <button class="btn btn-s" onclick="closeTischAssignModal()">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Tisch hinzufügen ══ -->
+<div id="add-tisch-modal" onclick="if(event.target===this)closeAddTischModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center">
+  <div style="background:var(--white);border-radius:16px;padding:24px;width:min(380px,95vw);box-shadow:0 20px 60px rgba(0,0,0,.18)">
+    <h2 style="font-size:1rem;margin-bottom:18px">Tisch hinzufügen</h2>
+    <div style="display:grid;grid-template-columns:1fr 100px;gap:10px;margin-bottom:16px">
+      <div><label class="fl">Name *</label><input type="text" id="new-tisch-name" class="fi" placeholder="z.B. Tisch 1"></div>
+      <div><label class="fl">Plätze</label><input type="number" id="new-tisch-kap" class="fi" min="1" value="10"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-s" onclick="closeAddTischModal()">Abbrechen</button>
+      <button class="btn btn-p" onclick="saveTisch()">Hinzufügen</button>
+    </div>
+  </div>
+</div>
 
 <!-- ══ MODAL: Ausgabe hinzufügen ══ -->
 <div id="add-bud-modal" onclick="if(event.target===this)closeAddBudModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center">
