@@ -81,7 +81,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .tisch-surface-cap{font-size:.72rem;color:var(--text-l);font-weight:600}
 .tisch-surface-cap.over{color:var(--rose-d)}
 .tisch-seat{width:30px;height:30px;border-radius:50%;background:#f0ebe4;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;color:var(--text-l);flex-shrink:0;transition:transform .15s,box-shadow .15s;user-select:none}
-.tisch-seat.belegt{color:#fff;border-color:transparent;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.tisch-seat.belegt{color:#fff;border-color:transparent;cursor:grab;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.tisch-seat.belegt:active{cursor:grabbing}
+.tisch-seat.drag-over{box-shadow:0 0 0 3px var(--sage);transform:scale(1.1)}
+.tisch-surface.drag-over{border-color:var(--gold);box-shadow:0 0 0 3px rgba(196,148,58,.35)}
 .tisch-seat.belegt:hover{transform:scale(1.18);box-shadow:0 3px 10px rgba(0,0,0,.22)}
 .tisch-visual-footer{display:flex;gap:6px;margin-top:4px}
 .unassigned-panel{width:230px;flex-shrink:0;background:var(--cream);border:1px solid var(--border);border-radius:14px;padding:14px;position:sticky;top:80px;max-height:calc(100vh - 120px);overflow-y:auto}
@@ -904,6 +907,37 @@ function addTodo(){
   document.getElementById('add-todo-card').style.display='none';renderTodos();
 }
 
+// ── Sitzplan Drag & Drop ─────────────────────────────────────
+let _dragGastId=null, _dragMoved=false;
+function splitGuestNames(name,count){
+  const parts=name.split(/\s*[+&]\s*/).map(p=>p.trim()).filter(Boolean);
+  const res=[...parts];
+  while(res.length<count)res.push(parts[parts.length-1]||name);
+  return res.slice(0,count);
+}
+function onSeatDragStart(ev,gastId){_dragGastId=gastId;_dragMoved=false;ev.dataTransfer.effectAllowed='move';ev.currentTarget.style.opacity='.4';}
+function onSeatDragEnd(ev){ev.currentTarget.style.opacity='';}
+function onDragOver(ev){ev.preventDefault();ev.dataTransfer.dropEffect='move';}
+function onDragEnter(ev){ev.currentTarget.classList.add('drag-over');}
+function onDragLeave(ev){ev.currentTarget.classList.remove('drag-over');}
+function onSeatDrop(ev,targetGastId,tischName){
+  ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.remove('drag-over');
+  if(!_dragGastId||_dragGastId===targetGastId){_dragGastId=null;return;}
+  const src=ST.gaeste.find(x=>x.id===_dragGastId),tgt=ST.gaeste.find(x=>x.id===targetGastId);
+  if(!src||!tgt){_dragGastId=null;return;}
+  if(src.tisch===tgt.tisch){const si=ST.gaeste.indexOf(src),ti=ST.gaeste.indexOf(tgt);[ST.gaeste[si],ST.gaeste[ti]]=[ST.gaeste[ti],ST.gaeste[si]];}
+  else src.tisch=tgt.tisch;
+  _dragGastId=null;_dragMoved=true;saveState();renderSitzplan();
+}
+function onTableSurfaceDrop(ev,tischName){
+  ev.preventDefault();ev.currentTarget.classList.remove('drag-over');
+  if(!_dragGastId)return;
+  const g=ST.gaeste.find(x=>x.id===_dragGastId);
+  if(g)g.tisch=tischName;
+  _dragGastId=null;_dragMoved=true;saveState();renderSitzplan();
+}
+function onSeatClick(ev,gastId){if(_dragMoved){_dragMoved=false;return;}removeGastFromTisch(gastId);}
+
 // ── Sitzplan ──────────────────────────────────────────────────
 function renderSitzplan(){renderSitzplanStats();renderTischGrid();renderUnassigned();}
 
@@ -931,21 +965,21 @@ function renderTischGrid(){
     const isOver=usedSeats>tisch.kapazitaet;
     const totalSeats=Math.max(tisch.kapazitaet,usedSeats);
     const seats=[];
-    guests.forEach(g=>{for(let i=0;i<g.personen;i++)seats.push({name:g.name,color:gc(g.gruppe),id:g.id,gruppe:g.gruppe});});
+    guests.forEach(g=>{const ns=splitGuestNames(g.name,g.personen);ns.forEach(dn=>seats.push({displayName:dn,fullName:g.name,color:gc(g.gruppe),id:g.id,gruppe:g.gruppe}));});
     while(seats.length<totalSeats)seats.push(null);
     const leftCount=2,topCount=Math.ceil((totalSeats-leftCount*2)/2),botCount=totalSeats-leftCount*2-topCount;
     const topSeats=seats.slice(0,topCount),botSeats=seats.slice(topCount,topCount+botCount);
     const leftSeats=seats.slice(topCount+botCount,topCount+botCount+leftCount),rightSeats=seats.slice(topCount+botCount+leftCount);
     function rSeat(s){
-      if(!s)return`<div class="tisch-seat" title="Freier Platz"></div>`;
-      const ini=s.name.split(/[\s+&]/)[0].slice(0,3);
-      return`<div class="tisch-seat belegt" style="background:${s.color}" title="${e(s.name)} · ${e(s.gruppe)}&#10;Klicken zum Entfernen" onclick="removeGastFromTisch('${s.id}')">${e(ini)}</div>`;
+      if(!s)return`<div class="tisch-seat" title="Freier Platz" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="onTableSurfaceDrop(event,'${e(tisch.name)}')"></div>`;
+      const ini=s.displayName.split(/\s+/)[0].slice(0,3);
+      return`<div class="tisch-seat belegt" draggable="true" style="background:${s.color}" title="${e(s.fullName)} · ${e(s.gruppe)}&#10;Ziehen: Platz tauschen | Klicken: Entfernen" ondragstart="onSeatDragStart(event,'${s.id}')" ondragend="onSeatDragEnd(event)" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="onSeatDrop(event,'${s.id}','${e(tisch.name)}')" onclick="onSeatClick(event,'${s.id}')">${e(ini)}</div>`;
     }
     html+=`<div class="tisch-visual-wrap">
       <div class="tisch-seats-top">${topSeats.map(rSeat).join('')}</div>
       <div class="tisch-middle-row">
         <div class="tisch-seats-side">${leftSeats.map(rSeat).join('')}</div>
-        <div class="tisch-surface${isOver?' over':''}">
+        <div class="tisch-surface${isOver?' over':''}" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="onTableSurfaceDrop(event,'${e(tisch.name)}')">
           <span class="tisch-surface-name">${e(tisch.name)}</span>
           <span class="tisch-surface-cap${isOver?' over':''}">${usedSeats}/${tisch.kapazitaet} Plätze</span>
         </div>
