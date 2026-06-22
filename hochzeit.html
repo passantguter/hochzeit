@@ -80,11 +80,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .tisch-surface-name{font-size:1rem;font-weight:600;color:var(--text);text-align:center}
 .tisch-surface-cap{font-size:.72rem;color:var(--text-l);font-weight:600}
 .tisch-surface-cap.over{color:var(--rose-d)}
-.tisch-seat{width:30px;height:30px;border-radius:50%;background:#f0ebe4;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;color:var(--text-l);flex-shrink:0;transition:transform .15s,box-shadow .15s;user-select:none}
-.tisch-seat.belegt{color:#fff;border-color:transparent;cursor:grab;box-shadow:0 1px 4px rgba(0,0,0,.18)}
-.tisch-seat.belegt:active{cursor:grabbing}
+.tisch-seat{width:36px;height:36px;border-radius:50%;background:#f0ebe4;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.52rem;font-weight:700;color:var(--text-l);flex-shrink:0;transition:transform .18s,box-shadow .18s;user-select:none}
+.tisch-seat.belegt{color:#fff;border-color:transparent;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.tisch-seat.belegt:hover{transform:scale(1.12);box-shadow:0 3px 10px rgba(0,0,0,.22)}
+.tisch-seat.selected{box-shadow:0 0 0 3px var(--gold),0 2px 10px rgba(0,0,0,.28)!important;transform:scale(1.28)!important;position:relative;z-index:5}
+.tisch-seat.drop-target{box-shadow:0 0 0 2px var(--sage)!important;transform:scale(1.12)!important;opacity:.8}
 .tisch-seat.drag-over{box-shadow:0 0 0 3px var(--sage);transform:scale(1.1)}
 .tisch-surface.drag-over{border-color:var(--gold);box-shadow:0 0 0 3px rgba(196,148,58,.35)}
+.tisch-surface.sel-target{border-color:var(--sage)!important;box-shadow:0 0 0 3px rgba(122,158,126,.4)!important;cursor:pointer}
 .tisch-seat.belegt:hover{transform:scale(1.18);box-shadow:0 3px 10px rgba(0,0,0,.22)}
 .tisch-visual-footer{display:flex;gap:6px;margin-top:4px}
 .unassigned-panel{width:230px;flex-shrink:0;background:var(--cream);border:1px solid var(--border);border-radius:14px;padding:14px;position:sticky;top:80px;max-height:calc(100vh - 120px);overflow-y:auto}
@@ -406,6 +409,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
       <span style="font-size:1.1rem;font-weight:700">Sitzplan</span>
       <button class="btn btn-p btn-sm" onclick="openAddTischModal()">+ Tisch hinzufügen</button>
+    </div>
+    <div id="sitzplan-sel-bar" style="display:none;background:#fff8e1;border:1px solid var(--gold);border-radius:10px;padding:8px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;font-size:.88rem">
+      <span style="font-size:1rem">✦</span>
+      <span id="sitzplan-sel-label" style="flex:1;font-weight:600"></span>
+      <span style="color:var(--text-l);font-size:.8rem">→ Tisch oder anderen Gast anklicken &nbsp;|&nbsp; ESC: Abbrechen &nbsp;|&nbsp; Entf: Entfernen</span>
+      <button class="btn btn-s btn-sm" onclick="cancelSelection()">✕</button>
     </div>
     <div class="sitzplan-stats" id="sitzplan-stats"></div>
     <div class="sitzplan-layout">
@@ -909,11 +918,25 @@ function addTodo(){
 }
 
 // ── Sitzplan Drag & Drop ─────────────────────────────────────
-let _dragGastId=null, _dragMoved=false;
+let _dragGastId=null, _dragMoved=false, _selectedGastId=null;
+function cancelSelection(){_selectedGastId=null;renderTischGrid();}
+function swapOrMoveGuests(srcId,tgtId){
+  const src=ST.gaeste.find(x=>x.id===srcId),tgt=ST.gaeste.find(x=>x.id===tgtId);
+  if(!src||!tgt)return;
+  if(src.tisch===tgt.tisch){const si=ST.gaeste.indexOf(src),ti=ST.gaeste.indexOf(tgt);[ST.gaeste[si],ST.gaeste[ti]]=[ST.gaeste[ti],ST.gaeste[si]];}
+  else src.tisch=tgt.tisch;
+  saveState();renderSitzplan();
+}
+function onTableSurfaceClick(tischName){
+  if(!_selectedGastId)return;
+  const g=ST.gaeste.find(x=>x.id===_selectedGastId);
+  if(g)g.tisch=tischName;
+  _selectedGastId=null;saveState();renderSitzplan();
+}
 function splitGuestNames(name,count){
   const parts=name.split(/\s*[+&]\s*/).map(p=>p.trim()).filter(Boolean);
-  const res=[...parts];
-  while(res.length<count)res.push(parts[parts.length-1]||name);
+  const res=[...parts];let extra=1;
+  while(res.length<count)res.push('+'+extra++);
   return res.slice(0,count);
 }
 function onSeatDragStart(ev,gastId){_dragGastId=gastId;_dragMoved=false;ev.dataTransfer.effectAllowed='move';ev.currentTarget.style.opacity='.4';}
@@ -937,10 +960,23 @@ function onTableSurfaceDrop(ev,tischName){
   if(g)g.tisch=tischName;
   _dragGastId=null;_dragMoved=true;saveState();renderSitzplan();
 }
-function onSeatClick(ev,gastId){if(_dragMoved){_dragMoved=false;return;}removeGastFromTisch(gastId);}
+function onSeatClick(ev,gastId){
+  if(_dragMoved){_dragMoved=false;return;}
+  ev.stopPropagation();
+  if(_selectedGastId===null){_selectedGastId=gastId;renderTischGrid();}
+  else if(_selectedGastId===gastId){_selectedGastId=null;renderTischGrid();}
+  else{swapOrMoveGuests(_selectedGastId,gastId);_selectedGastId=null;}
+}
 
 // ── Sitzplan ──────────────────────────────────────────────────
-function renderSitzplan(){renderSitzplanStats();renderTischGrid();renderUnassigned();}
+function renderSitzplan(){renderSitzplanStats();renderTischGrid();renderUnassigned();renderSelBar();}
+function renderSelBar(){
+  const bar=document.getElementById('sitzplan-sel-bar');if(!bar)return;
+  if(!_selectedGastId){bar.style.display='none';return;}
+  const g=ST.gaeste.find(x=>x.id===_selectedGastId);
+  document.getElementById('sitzplan-sel-label').textContent='Ausgewählt: '+(g?g.name:'–');
+  bar.style.display='flex';
+}
 
 function renderSitzplanStats(){
   const tische=ST.sitzplan.tische;
@@ -973,14 +1009,16 @@ function renderTischGrid(){
     const leftSeats=seats.slice(topCount+botCount,topCount+botCount+leftCount),rightSeats=seats.slice(topCount+botCount+leftCount);
     function rSeat(s){
       if(!s)return`<div class="tisch-seat" title="Freier Platz" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="onTableSurfaceDrop(event,'${e(tisch.name)}')"></div>`;
-      const ini=s.displayName.split(/\s+/)[0].slice(0,3);
-      return`<div class="tisch-seat belegt" draggable="true" style="background:${s.color}" title="${e(s.fullName)} · ${e(s.gruppe)}&#10;Ziehen: Platz tauschen | Klicken: Entfernen" ondragstart="onSeatDragStart(event,'${s.id}')" ondragend="onSeatDragEnd(event)" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="onSeatDrop(event,'${s.id}','${e(tisch.name)}')" onclick="onSeatClick(event,'${s.id}')">${e(ini)}</div>`;
+      const ini=s.displayName.slice(0,5);
+      const isSel=s.id===_selectedGastId;
+      const extraCls=(isSel?' selected':'')+(_selectedGastId&&!isSel?' drop-target':'');
+      return`<div class="tisch-seat belegt${extraCls}" draggable="true" style="background:${s.color}" title="${e(s.displayName)} (${e(s.fullName)}) · ${e(s.gruppe)}&#10;${isSel?'Nochmals klicken: Abbrechen | Entf: Entfernen':'Klicken: Auswählen | Dann Ziel klicken'}" ondragstart="onSeatDragStart(event,'${s.id}')" ondragend="onSeatDragEnd(event)" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="onSeatDrop(event,'${s.id}','${e(tisch.name)}')" onclick="onSeatClick(event,'${s.id}')">${e(ini)}</div>`;
     }
-    html+=`<div class="tisch-visual-wrap" ondragover="onDragOver(event)" ondrop="onTableSurfaceDrop(event,'${e(tisch.name)}')">
+    html+=`<div class="tisch-visual-wrap" onclick="if(_selectedGastId&&!event.target.closest('.tisch-visual-footer,button'))onTableSurfaceClick('${e(tisch.name)}')" ondragover="onDragOver(event)" ondrop="onTableSurfaceDrop(event,'${e(tisch.name)}')">
       <div class="tisch-seats-top">${topSeats.map(rSeat).join('')}</div>
       <div class="tisch-middle-row">
         <div class="tisch-seats-side">${leftSeats.map(rSeat).join('')}</div>
-        <div class="tisch-surface${isOver?' over':''}" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="onTableSurfaceDrop(event,'${e(tisch.name)}')">
+        <div class="tisch-surface${isOver?' over':''}${_selectedGastId?' sel-target':''}" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="onTableSurfaceDrop(event,'${e(tisch.name)}')">
           <span class="tisch-surface-name">${e(tisch.name)}</span>
           <span class="tisch-surface-cap${isOver?' over':''}">${usedSeats}/${tisch.kapazitaet} Plätze</span>
         </div>
@@ -994,6 +1032,7 @@ function renderTischGrid(){
     </div>`;
   });
   container.innerHTML=html||'<p style="color:var(--text-l);padding:20px 0">Noch keine Tische angelegt.</p>';
+  renderSelBar();
 }
 
 function renderUnassigned(){
@@ -1124,6 +1163,14 @@ function renderMehr(){
   });
   document.getElementById('dl-wrap').innerHTML=html;
 }
+
+// ── Keyboard shortcuts ────────────────────────────────────────
+document.addEventListener('keydown',ev=>{
+  if(ev.key==='Escape'&&_selectedGastId){_selectedGastId=null;renderTischGrid();}
+  if((ev.key==='Delete'||ev.key==='Backspace')&&_selectedGastId&&activeTab==='sitzplan'&&document.activeElement.tagName==='BODY'){
+    const id=_selectedGastId;_selectedGastId=null;removeGastFromTisch(id);
+  }
+});
 
 // ── Init ──────────────────────────────────────────────────────
 loadState().then(()=>{ renderHome(); startSync(); });
