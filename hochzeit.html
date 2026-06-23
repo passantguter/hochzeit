@@ -753,12 +753,13 @@ function renderGuests(){
       const sc=scls(g.status);
       html+=`<div class="guest-item">
         <span class="grp-dot" style="background:${gc(g.gruppe)}"></span>
-        <span class="guest-name">${e(g.name)}</span>
+        <span class="guest-name" onclick="openGastModal('${g.id}')" style="cursor:pointer" title="Klicken zum Bearbeiten">${e(g.name)}</span>
         ${g.personen>1?`<span style="font-size:.75rem;color:var(--text-l)">${g.personen}P</span>`:''}
         <span class="guest-note" style="display:none;font-size:.78rem;color:var(--text-l);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e(g.notiz)}</span>
         <select class="${sc} status-sel" onchange="updGastSt('${g.id}',this)">
           ${['Eingeladen','Zugesagt','Abgesagt','Liste'].map(s=>`<option${s===g.status?' selected':''}>${s}</option>`).join('')}
         </select>
+        <button class="btn btn-s btn-sm" onclick="openGastModal('${g.id}')" style="padding:4px 8px;font-size:.75rem" title="Bearbeiten">✏</button>
         <button class="btn btn-d btn-sm" onclick="delGast('${g.id}')" style="padding:4px 8px;font-size:.75rem">✕</button>
       </div>`;
     });
@@ -784,9 +785,11 @@ function saveGast(){
   const name=document.getElementById('gast-name').value.trim();
   if(!name){alert('Bitte Namen eingeben.');return;}
   const id=document.getElementById('gast-edit-id').value;
-  const data={name,personen:parseInt(document.getElementById('gast-pers').value)||1,status:document.getElementById('gast-status').value,gruppe:document.getElementById('gast-gruppe').value,tisch:'',notiz:document.getElementById('gast-notiz').value.trim()};
-  if(id){const g=ST.gaeste.find(x=>x.id===id);if(g)Object.assign(g,data);}else ST.gaeste.push({id:uid(),...data});
+  const data={name,personen:parseInt(document.getElementById('gast-pers').value)||1,status:document.getElementById('gast-status').value,gruppe:document.getElementById('gast-gruppe').value,notiz:document.getElementById('gast-notiz').value.trim()};
+  if(id){const g=ST.gaeste.find(x=>x.id===id);if(g)Object.assign(g,data);}
+  else ST.gaeste.push({id:uid(),tisch:'',...data});
   saveState();closeGastModal();renderGuests();
+  if(activeTab==='sitzplan')renderSitzplan();
 }
 document.getElementById('gast-modal').addEventListener('click',ev=>{if(ev.target===ev.currentTarget)closeGastModal();});
 
@@ -939,7 +942,10 @@ function splitGuestNames(name,count){
   while(res.length<count)res.push('+'+extra++);
   return res.slice(0,count);
 }
-function onSeatDragStart(ev,gastId){_dragGastId=gastId;_dragMoved=false;ev.dataTransfer.effectAllowed='move';ev.currentTarget.style.opacity='.4';}
+function onSeatDragStart(ev,gastId){
+  if(_selectedGastId){_selectedGastId=null;renderTischGrid();}
+  _dragGastId=gastId;_dragMoved=false;ev.dataTransfer.effectAllowed='move';ev.currentTarget.style.opacity='.4';
+}
 function onSeatDragEnd(ev){ev.currentTarget.style.opacity='';}
 function onDragOver(ev){ev.preventDefault();ev.dataTransfer.dropEffect='move';}
 function onDragEnter(ev){ev.currentTarget.classList.add('drag-over');}
@@ -1015,16 +1021,16 @@ function renderTischGrid(){
       return`<div class="tisch-seat belegt${extraCls}" draggable="true" style="background:${s.color}" title="${e(s.displayName)} (${e(s.fullName)}) · ${e(s.gruppe)}&#10;${isSel?'Nochmals klicken: Abbrechen | Entf: Entfernen':'Klicken: Auswählen | Dann Ziel klicken'}" ondragstart="onSeatDragStart(event,'${s.id}')" ondragend="onSeatDragEnd(event)" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="onSeatDrop(event,'${s.id}','${e(tisch.name)}')" onclick="onSeatClick(event,'${s.id}')">${e(ini)}</div>`;
     }
     html+=`<div class="tisch-visual-wrap" onclick="if(_selectedGastId&&!event.target.closest('.tisch-visual-footer,button'))onTableSurfaceClick('${e(tisch.name)}')" ondragover="onDragOver(event)" ondrop="onTableSurfaceDrop(event,'${e(tisch.name)}')">
-      <div class="tisch-seats-top">${topSeats.map(rSeat).join('')}</div>
-      <div class="tisch-middle-row">
-        <div class="tisch-seats-side">${leftSeats.map(rSeat).join('')}</div>
+      <div class="tisch-seats-top" ondragover="onDragOver(event)">${topSeats.map(rSeat).join('')}</div>
+      <div class="tisch-middle-row" ondragover="onDragOver(event)">
+        <div class="tisch-seats-side" ondragover="onDragOver(event)">${leftSeats.map(rSeat).join('')}</div>
         <div class="tisch-surface${isOver?' over':''}${_selectedGastId?' sel-target':''}" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="onTableSurfaceDrop(event,'${e(tisch.name)}')">
           <span class="tisch-surface-name">${e(tisch.name)}</span>
           <span class="tisch-surface-cap${isOver?' over':''}">${usedSeats}/${tisch.kapazitaet} Plätze</span>
         </div>
-        <div class="tisch-seats-side">${rightSeats.map(rSeat).join('')}</div>
+        <div class="tisch-seats-side" ondragover="onDragOver(event)">${rightSeats.map(rSeat).join('')}</div>
       </div>
-      <div class="tisch-seats-bottom">${botSeats.map(rSeat).join('')}</div>
+      <div class="tisch-seats-bottom" ondragover="onDragOver(event)">${botSeats.map(rSeat).join('')}</div>
       <div class="tisch-visual-footer">
         <button class="btn btn-p btn-sm" onclick="openTischAssignModal('${e(tisch.name)}')">+ Gast</button>
         <button class="btn btn-d btn-sm" onclick="deleteTisch('${tisch.id}')">✕</button>
