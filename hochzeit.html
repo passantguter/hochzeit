@@ -1037,7 +1037,7 @@ function onUnassignedGuestClick(gastId){
 }
 function onDragOver(ev){ev.preventDefault();ev.dataTransfer.dropEffect='move';}
 function onDragEnter(ev){ev.currentTarget.classList.add('drag-over');}
-function onDragLeave(ev){ev.currentTarget.classList.remove('drag-over');}
+function onDragLeave(ev){if(!ev.currentTarget.contains(ev.relatedTarget))ev.currentTarget.classList.remove('drag-over');}
 function onSeatDrop(ev,targetGastId,tischName,seatIdx){
   ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.remove('drag-over');
   if(!_dragGastId||_dragGastId===targetGastId){_dragGastId=null;return;}
