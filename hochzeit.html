@@ -965,30 +965,43 @@ function addTodo(){
 // ── Sitzplan Drag & Drop ─────────────────────────────────────
 let _dragGastId=null, _dragMoved=false, _selectedGastId=null;
 function cancelSelection(){_selectedGastId=null;renderTischGrid();}
+function initSeatIdx(){
+  ST.sitzplan.tische.forEach(t=>{
+    const gs=ST.gaeste.filter(g=>g.tisch===t.name&&g.status!=='Abgesagt');
+    let ai=0;gs.forEach(g=>{if(g.seatIdx==null)g.seatIdx=ai;ai=Math.max(ai,g.seatIdx)+(g.personen||1);});
+  });
+}
 function swapGuests(srcId,tgtId){
+  initSeatIdx();
   const src=ST.gaeste.find(x=>x.id===srcId),tgt=ST.gaeste.find(x=>x.id===tgtId);
   if(!src||!tgt)return;
   const si=ST.gaeste.indexOf(src),ti=ST.gaeste.indexOf(tgt);
   [src.tisch,tgt.tisch]=[tgt.tisch,src.tisch];
+  [src.seatIdx,tgt.seatIdx]=[tgt.seatIdx,src.seatIdx];
   [ST.gaeste[si],ST.gaeste[ti]]=[ST.gaeste[ti],ST.gaeste[si]];
   saveState();renderSitzplan();
 }
 function moveGuestToTableEnd(gastId,tischName){
-  // Verschiebt Gast ans Ende der Sitzreihe des Tisches
+  initSeatIdx();
   const src=ST.gaeste.find(g=>g.id===gastId);if(!src)return;
   src.tisch=tischName;
+  const tableGs=ST.gaeste.filter(g=>g.tisch===tischName&&g.status!=='Abgesagt'&&g.id!==src.id);
+  let ai=0;tableGs.forEach(g=>{ai=Math.max(ai,g.seatIdx)+(g.personen||1);});
+  src.seatIdx=ai;
   const si=ST.gaeste.indexOf(src);ST.gaeste.splice(si,1);
   const lastIdx=ST.gaeste.reduce((l,g,i)=>(g.tisch===tischName&&g.status!=='Abgesagt')?i:l,-1);
   ST.gaeste.splice(lastIdx+1,0,src);
 }
-function onEmptySeatClick(ev,tischName){
+function onEmptySeatClick(ev,tischName,seatIdx){
   ev.stopPropagation();
   if(!_selectedGastId)return;
   const src=ST.gaeste.find(g=>g.id===_selectedGastId);
-  const cross=src&&src.tisch!==tischName;
+  if(!src){_selectedGastId=null;renderTischGrid();return;}
+  const cross=src.tisch!==tischName;
   _selectedGastId=null;
-  if(cross){moveGuestToTableEnd(src.id,tischName);saveState();renderSitzplan();}
-  else renderTischGrid();
+  if(cross){moveGuestToTableEnd(src.id,tischName);}
+  else{initSeatIdx();src.seatIdx=seatIdx;}
+  saveState();renderSitzplan();
 }
 function onTableSurfaceClick(tischName){
   if(!_selectedGastId)return;
@@ -1024,8 +1037,9 @@ function onEmptySeatDrop(ev,tischName,seatIdx){
   ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.remove('drag-over');
   if(!_dragGastId)return;
   const src=ST.gaeste.find(g=>g.id===_dragGastId);if(!src){_dragGastId=null;return;}
-  if(src.tisch!==tischName){moveGuestToTableEnd(_dragGastId,tischName);saveState();renderSitzplan();}
-  _dragGastId=null;_dragMoved=true;
+  if(src.tisch!==tischName){moveGuestToTableEnd(_dragGastId,tischName);}
+  else{initSeatIdx();src.seatIdx=seatIdx;}
+  _dragGastId=null;_dragMoved=true;saveState();renderSitzplan();
 }
 function onTableSurfaceDrop(ev,tischName){
   ev.preventDefault();ev.currentTarget.classList.remove('drag-over');
@@ -1238,15 +1252,15 @@ function renderTischGrid(){
     const guests=ST.gaeste.filter(g=>g.tisch===tisch.name&&g.status!=='Abgesagt');
     const usedSeats=guests.reduce((s,g)=>s+g.personen,0);
     const isOver=usedSeats>tisch.kapazitaet;
-    const totalSeats=Math.max(tisch.kapazitaet,usedSeats);
-    const seats=[];
-    guests.forEach(g=>{const ns=splitGuestNames(g.name,g.personen);ns.forEach(dn=>seats.push({displayName:dn,fullName:g.name,color:gc(g.gruppe),id:g.id,gruppe:g.gruppe}));});
-    while(seats.length<totalSeats)seats.push(null);
+    let _ai=0;guests.forEach(g=>{if(g.seatIdx==null)g.seatIdx=_ai;_ai=Math.max(_ai,g.seatIdx)+(g.personen||1);});
+    const totalSeats=Math.max(tisch.kapazitaet,_ai);
+    const seats=new Array(totalSeats).fill(null);
+    guests.forEach(g=>{const ns=splitGuestNames(g.name,g.personen);ns.forEach((dn,i)=>{const si=g.seatIdx+i;if(si<totalSeats)seats[si]={displayName:dn,fullName:g.name,color:gc(g.gruppe),id:g.id,gruppe:g.gruppe};});});
     const leftCount=2,topCount=Math.ceil((totalSeats-leftCount*2)/2),botCount=totalSeats-leftCount*2-topCount;
     const topSeats=seats.slice(0,topCount),botSeats=seats.slice(topCount,topCount+botCount);
     const leftSeats=seats.slice(topCount+botCount,topCount+botCount+leftCount),rightSeats=seats.slice(topCount+botCount+leftCount);
     function rSeat(s,seatIdx){
-      if(!s){const emptyCls=_selectedGastId?' drop-target':'';return`<div class="tisch-seat${emptyCls}" title="${_selectedGastId?'Hierhin setzen':'Freier Platz'}" style="${_selectedGastId?'cursor:pointer;':''}" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="onEmptySeatDrop(event,'${e(tisch.name)}',${seatIdx})" onclick="onEmptySeatClick(event,'${e(tisch.name)}')"></div>`;}
+      if(!s){const emptyCls=_selectedGastId?' drop-target':'';return`<div class="tisch-seat${emptyCls}" title="${_selectedGastId?'Hierhin setzen':'Freier Platz'}" style="${_selectedGastId?'cursor:pointer;':''}" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="onEmptySeatDrop(event,'${e(tisch.name)}',${seatIdx})" onclick="onEmptySeatClick(event,'${e(tisch.name)}',${seatIdx})"></div>`;}
       const ini=s.displayName.slice(0,5);
       const isSel=s.id===_selectedGastId;
       const extraCls=(isSel?' selected':'')+(_selectedGastId&&!isSel?' drop-target':'');
