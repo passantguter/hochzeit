@@ -108,6 +108,28 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .assign-guest-gruppe{font-size:.78rem;color:var(--text-l)}
 @media(max-width:767px){.sitzplan-layout{flex-direction:column}.unassigned-panel{width:100%;position:static;max-height:none}}
 
+/* Sitzplan View Toggle */
+.szv-toggle{display:flex;background:var(--cream);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.szv-btn{border:none;padding:6px 14px;font-size:.82rem;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--text-l);transition:background .15s,color .15s}
+.szv-btn.szv-active{background:var(--sage);color:#fff}
+.szv-btn:not(.szv-active):hover{background:var(--border)}
+
+/* Raumplan */
+.raumplan-room{position:relative;background:#f8f6f0;border:2px solid var(--border);border-radius:12px;overflow:hidden;user-select:none}
+.raumplan-stage{position:absolute;background:var(--border);border-bottom:3px solid var(--sage);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:var(--text-l);letter-spacing:.3px}
+.raumplan-entrance{position:absolute;bottom:0;left:50%;transform:translateX(-50%)}
+.raumplan-tisch{position:absolute;border:2px solid var(--sage);border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:grab;box-shadow:0 2px 8px var(--shadow);transition:box-shadow .15s,transform .1s;background:var(--white);overflow:hidden}
+.raumplan-tisch:hover{box-shadow:0 4px 16px var(--shadow-m);transform:scale(1.03)}
+.raumplan-tisch:active{cursor:grabbing}
+.raumplan-tisch.over{border-color:var(--rose);background:#fef5f5}
+.raumplan-tisch-name{font-weight:700;font-size:.65rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px;max-width:100%}
+.raumplan-tisch-count{font-size:.6rem;color:var(--text-l)}
+.raumplan-tisch-dots{display:flex;gap:2px;margin-top:1px}
+.raumplan-legend{margin-top:10px;font-size:.76rem;color:var(--text-l);display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.raumplan-info-pill.over{background:#fde8e8;color:var(--rose-d);border-color:var(--rose)}
+.raumplan-info{margin-bottom:10px;display:flex;gap:10px;flex-wrap:wrap}
+.raumplan-info-pill{background:var(--cream);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:.8rem;display:flex;align-items:center;gap:5px}
+
 /* Timeline */
 .tl-item{display:flex;gap:14px;padding:10px 0;border-bottom:1px solid #f0ebe4}
 .tl-item:last-child{border-bottom:none}
@@ -406,9 +428,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 
   <!-- ══ SITZPLAN ══ -->
   <div id="tab-sitzplan" class="tab">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
       <span style="font-size:1.1rem;font-weight:700">Sitzplan</span>
-      <button class="btn btn-p btn-sm" onclick="openAddTischModal()">+ Tisch hinzufügen</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="szv-toggle">
+          <button id="szv-btn-sitzplan" class="szv-btn szv-active" onclick="setSitzplanView('sitzplan')">Sitzplan</button>
+          <button id="szv-btn-raumplan" class="szv-btn" onclick="setSitzplanView('raumplan')">🏛 Raumplan</button>
+        </div>
+        <button class="btn btn-p btn-sm" onclick="openAddTischModal()">+ Tisch</button>
+      </div>
     </div>
     <div id="sitzplan-sel-bar" style="display:none;background:#fff8e1;border:1px solid var(--gold);border-radius:10px;padding:8px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;font-size:.88rem">
       <span style="font-size:1rem">✦</span>
@@ -417,17 +445,24 @@ html,body{height:100%;background:var(--bg);color:var(--text);
       <button class="btn btn-s btn-sm" onclick="cancelSelection()">✕</button>
     </div>
     <div class="sitzplan-stats" id="sitzplan-stats"></div>
-    <div class="sitzplan-layout">
-      <div class="tisch-grid" id="tisch-grid"></div>
-      <div class="unassigned-panel">
-        <div class="unassigned-header">
-          <span class="unassigned-title">Nicht zugewiesen</span>
-          <span id="unassigned-count" class="unassigned-count-badge"></span>
+    <!-- Sitzplan-View -->
+    <div id="szv-sitzplan">
+      <div class="sitzplan-layout">
+        <div class="tisch-grid" id="tisch-grid"></div>
+        <div class="unassigned-panel">
+          <div class="unassigned-header">
+            <span class="unassigned-title">Nicht zugewiesen</span>
+            <span id="unassigned-count" class="unassigned-count-badge"></span>
+          </div>
+          <input type="text" id="unassigned-search" placeholder="Gast suchen …" oninput="renderUnassigned()"
+            style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:.85rem;margin-bottom:10px;font-family:inherit">
+          <div id="unassigned-list"></div>
         </div>
-        <input type="text" id="unassigned-search" placeholder="Gast suchen …" oninput="renderUnassigned()"
-          style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:.85rem;margin-bottom:10px;font-family:inherit">
-        <div id="unassigned-list"></div>
       </div>
+    </div>
+    <!-- Raumplan-View -->
+    <div id="szv-raumplan" style="display:none">
+      <div id="raumplan-container"></div>
     </div>
   </div>
 
@@ -565,6 +600,13 @@ let ST, _syncTimer=null, _syncing=false;
 function migrate(data){
   if(!data.sitzplan)data.sitzplan={tische:[]};
   data.todos.forEach(t=>{if(!t.kategorie)t.kategorie='Organisation';});
+  data.sitzplan.tische.forEach(t=>{
+    if(t.raumX===undefined)t.raumX=null;
+    if(t.raumY===undefined)t.raumY=null;
+    if(t.raumRot===undefined)t.raumRot=0;
+  });
+  if(!data.sitzplan.abstand&&data.sitzplan.abstand!==0)data.sitzplan.abstand=150;
+  if(data.sitzplan.raster===undefined)data.sitzplan.raster=50;
   mergeNewGuests();
   mergeAddresses();
 }
@@ -923,12 +965,27 @@ function addTodo(){
 // ── Sitzplan Drag & Drop ─────────────────────────────────────
 let _dragGastId=null, _dragMoved=false, _selectedGastId=null;
 function cancelSelection(){_selectedGastId=null;renderTischGrid();}
-function swapOrMoveGuests(srcId,tgtId){
+function swapGuests(srcId,tgtId){
   const src=ST.gaeste.find(x=>x.id===srcId),tgt=ST.gaeste.find(x=>x.id===tgtId);
   if(!src||!tgt)return;
-  if(src.tisch===tgt.tisch){const si=ST.gaeste.indexOf(src),ti=ST.gaeste.indexOf(tgt);[ST.gaeste[si],ST.gaeste[ti]]=[ST.gaeste[ti],ST.gaeste[si]];}
-  else src.tisch=tgt.tisch;
+  const si=ST.gaeste.indexOf(src),ti=ST.gaeste.indexOf(tgt);
+  [src.tisch,tgt.tisch]=[tgt.tisch,src.tisch];
+  [ST.gaeste[si],ST.gaeste[ti]]=[ST.gaeste[ti],ST.gaeste[si]];
   saveState();renderSitzplan();
+}
+function moveGuestToTableEnd(gastId,tischName){
+  // Verschiebt Gast ans Ende der Sitzreihe des Tisches
+  const src=ST.gaeste.find(g=>g.id===gastId);if(!src)return;
+  src.tisch=tischName;
+  const si=ST.gaeste.indexOf(src);ST.gaeste.splice(si,1);
+  const lastIdx=ST.gaeste.reduce((l,g,i)=>(g.tisch===tischName&&g.status!=='Abgesagt')?i:l,-1);
+  ST.gaeste.splice(lastIdx+1,0,src);
+}
+function onEmptySeatClick(ev,tischName){
+  ev.stopPropagation();
+  if(!_selectedGastId)return;
+  moveGuestToTableEnd(_selectedGastId,tischName);
+  _selectedGastId=null;saveState();renderSitzplan();
 }
 function onTableSurfaceClick(tischName){
   if(!_selectedGastId)return;
@@ -950,13 +1007,19 @@ function onSeatDragEnd(ev){ev.currentTarget.style.opacity='';}
 function onDragOver(ev){ev.preventDefault();ev.dataTransfer.dropEffect='move';}
 function onDragEnter(ev){ev.currentTarget.classList.add('drag-over');}
 function onDragLeave(ev){ev.currentTarget.classList.remove('drag-over');}
-function onSeatDrop(ev,targetGastId,tischName){
+function onSeatDrop(ev,targetGastId,tischName,seatIdx){
   ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.remove('drag-over');
   if(!_dragGastId||_dragGastId===targetGastId){_dragGastId=null;return;}
   const src=ST.gaeste.find(x=>x.id===_dragGastId),tgt=ST.gaeste.find(x=>x.id===targetGastId);
   if(!src||!tgt){_dragGastId=null;return;}
-  if(src.tisch===tgt.tisch){const si=ST.gaeste.indexOf(src),ti=ST.gaeste.indexOf(tgt);[ST.gaeste[si],ST.gaeste[ti]]=[ST.gaeste[ti],ST.gaeste[si]];}
-  else src.tisch=tgt.tisch;
+  swapGuests(_dragGastId,targetGastId);
+  _dragGastId=null;_dragMoved=true;
+}
+function onEmptySeatDrop(ev,tischName,seatIdx){
+  ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.remove('drag-over');
+  if(!_dragGastId)return;
+  const src=ST.gaeste.find(g=>g.id===_dragGastId);if(!src){_dragGastId=null;return;}
+  moveGuestToTableEnd(_dragGastId,tischName);
   _dragGastId=null;_dragMoved=true;saveState();renderSitzplan();
 }
 function onTableSurfaceDrop(ev,tischName){
@@ -971,11 +1034,175 @@ function onSeatClick(ev,gastId){
   ev.stopPropagation();
   if(_selectedGastId===null){_selectedGastId=gastId;renderTischGrid();}
   else if(_selectedGastId===gastId){_selectedGastId=null;renderTischGrid();}
-  else{swapOrMoveGuests(_selectedGastId,gastId);_selectedGastId=null;}
+  else{const tmp=_selectedGastId;_selectedGastId=null;swapGuests(tmp,gastId);}
 }
 
 // ── Sitzplan ──────────────────────────────────────────────────
-function renderSitzplan(){renderSitzplanStats();renderTischGrid();renderUnassigned();renderSelBar();}
+let sitzplanView='sitzplan';
+function setSitzplanView(view){
+  sitzplanView=view;
+  ['sitzplan','raumplan'].forEach(v=>{
+    const btn=document.getElementById('szv-btn-'+v);
+    const div=document.getElementById('szv-'+v);
+    if(btn)btn.classList.toggle('szv-active',v===view);
+    if(div)div.style.display=v===view?'':'none';
+  });
+  if(view==='raumplan')renderRaumplan();
+}
+function renderSitzplan(){renderSitzplanStats();renderTischGrid();renderUnassigned();renderSelBar();if(sitzplanView==='raumplan')renderRaumplan();}
+
+// ── Raumplan ──────────────────────────────────────────────────
+// Badsaal Schnaittach: Saal 19×13m (247m²) + Bühne 8×5m (39m², zusätzlich, oben)
+// Gesamtfläche der Darstellung: 19m × 18m (Saal 13m + Bühne 5m oben)
+// Doppeltisch: 280×140cm (12er)
+const RP={
+  totW:19,totH:18,   // Gesamtdarstellung (m)
+  saalH:13,          // Saalhöhe (m), Bühne = obere 5m
+  buehneH:5,buehneW:8, // Bühnenabmessungen
+  tW:2.8,tH:1.4      // Tisch: 280×140cm
+};
+let _dragTischId=null;
+function onTischDragStartInRoom(ev,tischId){
+  _dragTischId=tischId;ev.dataTransfer.effectAllowed='move';
+  ev.currentTarget.style.opacity='.45';
+}
+function onTischDragEndInRoom(ev){ev.currentTarget.style.opacity='';}
+function onRaumplanDrop(ev){
+  ev.preventDefault();
+  if(!_dragTischId)return;
+  const room=document.getElementById('raumplan-room');if(!room)return;
+  const rect=room.getBoundingClientRect();
+  const xPct=Math.max(2,Math.min(98,((ev.clientX-rect.left)/rect.width)*100));
+  const yPct=Math.max(2,Math.min(98,((ev.clientY-rect.top)/rect.height)*100));
+  const t=ST.sitzplan.tische.find(t=>t.id===_dragTischId);
+  if(t){t.raumX=xPct;t.raumY=yPct;saveState();renderRaumplan();}
+  _dragTischId=null;
+}
+function rotateTischInRoom(tischId){
+  const t=ST.sitzplan.tische.find(t=>t.id===tischId);
+  if(!t)return;
+  t.raumRot=(t.raumRot===0)?90:0;
+  saveState();renderRaumplan();
+}
+function setTischAbstand(val){
+  ST.sitzplan.abstand=Math.max(0,Math.min(300,parseInt(val)||0));
+  saveState();renderRaumplan();
+}
+function defaultRaumPos(idx){
+  // Auto-layout: unterhalb der Bühne im Saal
+  // Bühne belegt obere buehneH/totH des Canvas
+  const buehneEndPct=(RP.buehneH/RP.totH)*100;
+  const saalStartPct=buehneEndPct+2;
+  const tWpct=(RP.tW/RP.totW)*100,tHpct=(RP.tH/RP.totH)*100;
+  const cols=Math.max(1,Math.floor(88/(tWpct+3)));
+  const col=idx%cols,row=Math.floor(idx/cols);
+  const x=6+(col*(tWpct+3))+tWpct/2;
+  const y=saalStartPct+4+(row*(tHpct+6))+tHpct/2;
+  return{x:Math.min(x,94),y:Math.min(y,97)};
+}
+function renderRaumplan(){
+  const container=document.getElementById('raumplan-container');if(!container)return;
+  const tische=ST.sitzplan.tische;
+  const abstand=(ST.sitzplan.abstand??150)/100; // in m
+  const totalGuests=ST.gaeste.filter(g=>g.status!=='Abgesagt'&&g.tisch).reduce((s,g)=>s+g.personen,0);
+  const totalCap=tische.reduce((s,t)=>s+t.kapazitaet,0);
+
+  // Flächen
+  const saalFlaeche=247; // m²
+  const buehneFlaeche=39; // m² (zusätzlich)
+  const tischFlaeche=tische.reduce((s,t)=>s+(RP.tW*RP.tH),0);
+  const tischMitAbstand=tische.reduce((s,t)=>s+((RP.tW+abstand)*(RP.tH+abstand)),0);
+  const restFlaeche=Math.max(0,saalFlaeche-tischMitAbstand);
+
+  // Koordinaten in % des Gesamt-Canvas
+  const buehneL=((RP.totW-RP.buehneW)/2/RP.totW)*100;
+  const buehneWpct=(RP.buehneW/RP.totW)*100;
+  const buehneHpct=(RP.buehneH/RP.totH)*100;
+  const saalTopPct=buehneHpct; // Saal beginnt nach der Bühne
+
+  let html=`<div class="raumplan-info">
+    <div class="raumplan-info-pill">📐 Saal: 19×13 m · <strong>247 m²</strong></div>
+    <div class="raumplan-info-pill">🎭 Bühne: 8×5 m · 39 m² (zusätzlich)</div>
+    <div class="raumplan-info-pill">🪑 ${tische.length} Tische · ${fmt(tischFlaeche.toFixed(1))} m² Tischfläche</div>
+    <div class="raumplan-info-pill${restFlaeche<30?' over':''}" style="${restFlaeche<30?'background:#fde8e8;color:var(--rose-d);border-color:var(--rose)':''}">✅ Restfläche mit Abstand: ~${Math.round(restFlaeche)} m²</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap">
+    <label style="font-size:.82rem;font-weight:600;color:var(--text-l)">Tischabstand:</label>
+    <div style="display:flex;align-items:center;gap:6px">
+      <input type="range" min="0" max="300" step="10" value="${ST.sitzplan.abstand??150}"
+        oninput="setTischAbstand(this.value);document.getElementById('abstand-val').textContent=Math.round(this.value)+'cm'"
+        style="width:140px;accent-color:var(--sage)">
+      <span id="abstand-val" style="font-size:.85rem;font-weight:700;min-width:40px">${ST.sitzplan.abstand??150}cm</span>
+    </div>
+    <span style="font-size:.75rem;color:var(--text-l)">= ${((ST.sitzplan.abstand??150)/100).toFixed(2)} m zwischen Tischen</span>
+  </div>`;
+
+  // Raum-Canvas (Gesamtfläche 19:18 Verhältnis)
+  html+=`<div class="raumplan-room" id="raumplan-room"
+    style="padding-top:${(RP.totH/RP.totW)*100}%"
+    ondragover="event.preventDefault()" ondragenter="event.preventDefault()" ondrop="onRaumplanDrop(event)">
+
+    <!-- Bühne (oben, 8×5m, zentriert) -->
+    <div class="raumplan-stage" style="left:${buehneL}%;top:0;width:${buehneWpct}%;height:${buehneHpct}%">
+      Bühne (8×5 m · 39 m²)
+    </div>
+
+    <!-- Saal-Grenze (Übergang Bühne → Saal) -->
+    <div style="position:absolute;top:${saalTopPct}%;left:0;right:0;height:2px;background:var(--border);pointer-events:none"></div>
+    <div style="position:absolute;top:${saalTopPct+0.5}%;left:4px;font-size:.58rem;color:var(--text-l);font-weight:700;pointer-events:none;opacity:.8">Saal 19×13 m (247 m²)</div>
+
+    <!-- Eingang unten -->
+    <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:14%;height:3px;background:var(--sage);pointer-events:none"></div>
+    <div style="position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-size:.6rem;color:var(--text-l);font-weight:700;white-space:nowrap;pointer-events:none">Eingang</div>
+
+    <!-- Tische -->`;
+
+  tische.forEach((t,idx)=>{
+    const pos=(t.raumX!==null&&t.raumY!==null)?{x:t.raumX,y:t.raumY}:defaultRaumPos(idx);
+    const rot=t.raumRot||0;
+    const tWm=rot===90?RP.tH:RP.tW, tHm=rot===90?RP.tW:RP.tH; // m nach Rotation
+    const tWpct=(tWm/RP.totW)*100, tHpct=(tHm/RP.totH)*100;
+    const abstandWpct=(abstand/RP.totW)*100, abstandHpct=(abstand/RP.totH)*100;
+    const guests=ST.gaeste.filter(g=>g.tisch===t.name&&g.status!=='Abgesagt');
+    const count=guests.reduce((s,g)=>s+g.personen,0);
+    const isOver=count>t.kapazitaet;
+    const colors=[...new Set(guests.map(g=>gc(g.gruppe)))].slice(0,4);
+    const left=pos.x-tWpct/2, top=pos.y-tHpct/2;
+    const abstandLeft=left-abstandWpct/2, abstandTop=top-abstandHpct/2;
+    html+=`
+    <!-- Abstandszone (gestrichelt) -->
+    <div style="position:absolute;left:${abstandLeft}%;top:${abstandTop}%;width:${tWpct+abstandWpct}%;height:${tHpct+abstandHpct}%;
+      border:1.5px dashed ${isOver?'var(--rose)':'var(--sage-l)'};border-radius:8px;background:rgba(168,197,171,.07);pointer-events:none"></div>
+    <!-- Tisch -->
+    <div class="raumplan-tisch${isOver?' over':''}"
+      draggable="true"
+      ondragstart="onTischDragStartInRoom(event,'${t.id}')"
+      ondragend="onTischDragEndInRoom(event)"
+      style="left:${left}%;top:${top}%;width:${tWpct}%;height:${tHpct}%;cursor:grab"
+      title="${e(t.name)}: ${count}/${t.kapazitaet} · ${rot===90?'140×280':'280×140'} cm&#10;Drag: verschieben · ↻: drehen">
+      <div class="raumplan-tisch-name">${e(t.name)}</div>
+      <div class="raumplan-tisch-count" style="color:${isOver?'var(--rose-d)':'var(--text-l)'}">${count}/${t.kapazitaet}</div>
+      <div class="raumplan-tisch-dots">${colors.map(c=>`<span style="width:6px;height:6px;border-radius:50%;background:${c}"></span>`).join('')}</div>
+      <button onclick="event.stopPropagation();rotateTischInRoom('${t.id}')"
+        style="position:absolute;top:2px;right:2px;border:none;background:transparent;font-size:.7rem;cursor:pointer;opacity:.6;padding:1px 3px;border-radius:3px;line-height:1"
+        title="Tisch drehen">↻</button>
+    </div>`;
+  });
+
+  html+='</div>'; // /room
+
+  if(!tische.length){
+    html+='<div class="empty" style="margin-top:20px">Noch keine Tische angelegt. Im Sitzplan-Tab Tische hinzufügen.</div>';
+  }
+
+  html+=`<div class="raumplan-legend">
+    <span>🖱 Drag: Tisch positionieren &nbsp;·&nbsp; ↻: Tisch drehen (0°/90°)</span>
+    <span>🟩 gestrichelt: Tisch inkl. Abstandszone</span>
+    <span>📏 Maßstab: Doppeltisch 280×140 cm</span>
+  </div>`;
+
+  container.innerHTML=html;
+}
 function renderSelBar(){
   const bar=document.getElementById('sitzplan-sel-bar');if(!bar)return;
   if(!_selectedGastId){bar.style.display='none';return;}
@@ -1013,24 +1240,24 @@ function renderTischGrid(){
     const leftCount=2,topCount=Math.ceil((totalSeats-leftCount*2)/2),botCount=totalSeats-leftCount*2-topCount;
     const topSeats=seats.slice(0,topCount),botSeats=seats.slice(topCount,topCount+botCount);
     const leftSeats=seats.slice(topCount+botCount,topCount+botCount+leftCount),rightSeats=seats.slice(topCount+botCount+leftCount);
-    function rSeat(s){
-      if(!s)return`<div class="tisch-seat" title="Freier Platz" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="onTableSurfaceDrop(event,'${e(tisch.name)}')"></div>`;
+    function rSeat(s,seatIdx){
+      if(!s){const emptyCls=_selectedGastId?' drop-target':'';return`<div class="tisch-seat${emptyCls}" title="${_selectedGastId?'Hierhin setzen':'Freier Platz'}" style="${_selectedGastId?'cursor:pointer;':''}" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="onEmptySeatDrop(event,'${e(tisch.name)}',${seatIdx})" onclick="onEmptySeatClick(event,'${e(tisch.name)}')"></div>`;}
       const ini=s.displayName.slice(0,5);
       const isSel=s.id===_selectedGastId;
       const extraCls=(isSel?' selected':'')+(_selectedGastId&&!isSel?' drop-target':'');
-      return`<div class="tisch-seat belegt${extraCls}" draggable="true" style="background:${s.color}" title="${e(s.displayName)} (${e(s.fullName)}) · ${e(s.gruppe)}&#10;${isSel?'Nochmals klicken: Abbrechen | Entf: Entfernen':'Klicken: Auswählen | Dann Ziel klicken'}" ondragstart="onSeatDragStart(event,'${s.id}')" ondragend="onSeatDragEnd(event)" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="onSeatDrop(event,'${s.id}','${e(tisch.name)}')" onclick="onSeatClick(event,'${s.id}')">${e(ini)}</div>`;
+      return`<div class="tisch-seat belegt${extraCls}" draggable="true" style="background:${s.color}" title="${e(s.displayName)} (${e(s.fullName)}) · ${e(s.gruppe)}&#10;${isSel?'Nochmals klicken: Abbrechen | Entf: Entfernen':'Klicken: Auswählen | Dann Ziel klicken'}" ondragstart="onSeatDragStart(event,'${s.id}')" ondragend="onSeatDragEnd(event)" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="onSeatDrop(event,'${s.id}','${e(tisch.name)}',${seatIdx})" onclick="onSeatClick(event,'${s.id}')">${e(ini)}</div>`;
     }
     html+=`<div class="tisch-visual-wrap" onclick="if(_selectedGastId&&!event.target.closest('.tisch-visual-footer,button'))onTableSurfaceClick('${e(tisch.name)}')" ondragover="onDragOver(event)" ondrop="onTableSurfaceDrop(event,'${e(tisch.name)}')">
-      <div class="tisch-seats-top" ondragover="onDragOver(event)">${topSeats.map(rSeat).join('')}</div>
+      <div class="tisch-seats-top" ondragover="onDragOver(event)">${topSeats.map((s,i)=>rSeat(s,i)).join('')}</div>
       <div class="tisch-middle-row" ondragover="onDragOver(event)">
-        <div class="tisch-seats-side" ondragover="onDragOver(event)">${leftSeats.map(rSeat).join('')}</div>
+        <div class="tisch-seats-side" ondragover="onDragOver(event)">${leftSeats.map((s,i)=>rSeat(s,topCount+botCount+i)).join('')}</div>
         <div class="tisch-surface${isOver?' over':''}${_selectedGastId?' sel-target':''}" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="onTableSurfaceDrop(event,'${e(tisch.name)}')">
           <span class="tisch-surface-name">${e(tisch.name)}</span>
           <span class="tisch-surface-cap${isOver?' over':''}">${usedSeats}/${tisch.kapazitaet} Plätze</span>
         </div>
-        <div class="tisch-seats-side" ondragover="onDragOver(event)">${rightSeats.map(rSeat).join('')}</div>
+        <div class="tisch-seats-side" ondragover="onDragOver(event)">${rightSeats.map((s,i)=>rSeat(s,topCount+botCount+leftCount+i)).join('')}</div>
       </div>
-      <div class="tisch-seats-bottom" ondragover="onDragOver(event)">${botSeats.map(rSeat).join('')}</div>
+      <div class="tisch-seats-bottom" ondragover="onDragOver(event)">${botSeats.map((s,i)=>rSeat(s,topCount+i)).join('')}</div>
       <div class="tisch-visual-footer">
         <button class="btn btn-p btn-sm" onclick="openTischAssignModal('${e(tisch.name)}')">+ Gast</button>
         <button class="btn btn-d btn-sm" onclick="deleteTisch('${tisch.id}')">✕</button>
@@ -1129,7 +1356,7 @@ function closeAddTischModal(){document.getElementById('add-tisch-modal').style.d
 function saveTisch(){
   const name=document.getElementById('new-tisch-name').value.trim();
   if(!name){alert('Bitte Tischnamen eingeben.');return;}
-  ST.sitzplan.tische.push({id:uid(),name,kapazitaet:parseInt(document.getElementById('new-tisch-kap').value)||10});
+  ST.sitzplan.tische.push({id:uid(),name,kapazitaet:parseInt(document.getElementById('new-tisch-kap').value)||10,raumX:null,raumY:null,raumRot:0});
   saveState();closeAddTischModal();renderSitzplan();
 }
 function deleteTisch(id){
