@@ -984,14 +984,19 @@ function moveGuestToTableEnd(gastId,tischName){
 function onEmptySeatClick(ev,tischName){
   ev.stopPropagation();
   if(!_selectedGastId)return;
-  moveGuestToTableEnd(_selectedGastId,tischName);
-  _selectedGastId=null;saveState();renderSitzplan();
+  const src=ST.gaeste.find(g=>g.id===_selectedGastId);
+  const cross=src&&src.tisch!==tischName;
+  _selectedGastId=null;
+  if(cross){moveGuestToTableEnd(src.id,tischName);saveState();renderSitzplan();}
+  else renderTischGrid();
 }
 function onTableSurfaceClick(tischName){
   if(!_selectedGastId)return;
-  const g=ST.gaeste.find(x=>x.id===_selectedGastId);
-  if(g)g.tisch=tischName;
-  _selectedGastId=null;saveState();renderSitzplan();
+  const src=ST.gaeste.find(x=>x.id===_selectedGastId);
+  const cross=src&&src.tisch!==tischName;
+  _selectedGastId=null;
+  if(cross){moveGuestToTableEnd(src.id,tischName);saveState();renderSitzplan();}
+  else renderTischGrid();
 }
 function splitGuestNames(name,count){
   const parts=name.split(/\s*[+&]\s*/).map(p=>p.trim()).filter(Boolean);
@@ -1019,15 +1024,15 @@ function onEmptySeatDrop(ev,tischName,seatIdx){
   ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.remove('drag-over');
   if(!_dragGastId)return;
   const src=ST.gaeste.find(g=>g.id===_dragGastId);if(!src){_dragGastId=null;return;}
-  moveGuestToTableEnd(_dragGastId,tischName);
-  _dragGastId=null;_dragMoved=true;saveState();renderSitzplan();
+  if(src.tisch!==tischName){moveGuestToTableEnd(_dragGastId,tischName);saveState();renderSitzplan();}
+  _dragGastId=null;_dragMoved=true;
 }
 function onTableSurfaceDrop(ev,tischName){
   ev.preventDefault();ev.currentTarget.classList.remove('drag-over');
   if(!_dragGastId)return;
-  const g=ST.gaeste.find(x=>x.id===_dragGastId);
-  if(g)g.tisch=tischName;
-  _dragGastId=null;_dragMoved=true;saveState();renderSitzplan();
+  const src=ST.gaeste.find(x=>x.id===_dragGastId);
+  if(src&&src.tisch!==tischName){moveGuestToTableEnd(_dragGastId,tischName);saveState();renderSitzplan();}
+  _dragGastId=null;_dragMoved=true;
 }
 function onSeatClick(ev,gastId){
   if(_dragMoved){_dragMoved=false;return;}
