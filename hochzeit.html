@@ -81,16 +81,21 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .tisch-surface-cap{font-size:.72rem;color:var(--text-l);font-weight:600}
 .tisch-surface-cap.over{color:var(--rose-d)}
 .tisch-seat{width:36px;height:36px;border-radius:50%;background:#f0ebe4;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.52rem;font-weight:700;color:var(--text-l);flex-shrink:0;transition:transform .18s,box-shadow .18s;user-select:none}
-.tisch-seat.belegt{color:#fff;border-color:transparent;box-shadow:0 1px 4px rgba(0,0,0,.18);position:relative}
+.tisch-seat.belegt{color:#fff;border-color:transparent;cursor:grab;box-shadow:0 1px 4px rgba(0,0,0,.18);position:relative}
 .tisch-seat.belegt:hover{transform:scale(1.12);box-shadow:0 3px 10px rgba(0,0,0,.22)}
 .tisch-seat.belegt .seat-remove{display:none;position:absolute;top:-4px;right:-4px;width:14px;height:14px;border-radius:50%;background:var(--rose);color:#fff;font-size:.6rem;line-height:14px;text-align:center;cursor:pointer;border:none;padding:0}
 .tisch-seat.belegt:hover .seat-remove{display:block}
+.tisch-seat.selected{box-shadow:0 0 0 3px var(--gold)!important;transform:scale(1.22)!important;position:relative;z-index:5}
+.tisch-seat.drop-target{box-shadow:0 0 0 2px var(--sage)!important;transform:scale(1.1)!important}
+.tisch-seat.drag-over{box-shadow:0 0 0 3px var(--sage)!important;transform:scale(1.12)!important}
 .tisch-visual-footer{display:flex;gap:6px;margin-top:4px}
 .unassigned-panel{width:230px;flex-shrink:0;background:var(--cream);border:1px solid var(--border);border-radius:14px;padding:14px;position:sticky;top:80px;max-height:calc(100vh - 120px);overflow-y:auto}
 .unassigned-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .unassigned-title{font-weight:600;font-size:.95rem}
 .unassigned-count-badge{background:#fce4e4;color:var(--rose-d);font-size:.72rem;font-weight:700;border-radius:10px;padding:2px 8px}
-.unassigned-guest{display:flex;align-items:center;gap:8px;padding:7px 6px;border-bottom:1px solid #f0ebe4;font-size:.85rem;border-radius:6px;margin:0 -6px}
+.unassigned-guest{display:flex;align-items:center;gap:8px;padding:7px 6px;border-bottom:1px solid #f0ebe4;font-size:.85rem;border-radius:6px;margin:0 -6px;cursor:grab;transition:background .12s}
+.unassigned-guest:hover{background:#f0ebe4;border-bottom-color:transparent}
+.unassigned-guest.selected{background:#fff8e1;border-bottom-color:transparent;box-shadow:0 0 0 2px var(--gold) inset}
 .unassigned-guest:last-child{border-bottom:none}
 .unassigned-guest-gruppe{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .unassigned-guest-name{flex:1;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -599,6 +604,23 @@ function migrate(data){
   if(data.sitzplan.raster===undefined)data.sitzplan.raster=50;
   mergeNewGuests();
   mergeAddresses();
+  // seatIdx normalisieren: Duplikate auflösen, fehlende vergeben
+  data.sitzplan.tische.forEach(t=>{
+    const gs=data.gaeste.filter(g=>g.tisch===t.name&&g.status!=='Abgesagt');
+    const used=new Set();
+    gs.forEach(g=>{
+      if(g.seatIdx!=null){
+        let ok=true;for(let i=g.seatIdx;i<g.seatIdx+(g.personen||1);i++){if(used.has(i)){ok=false;break;}}
+        if(ok){for(let i=g.seatIdx;i<g.seatIdx+(g.personen||1);i++)used.add(i);}
+        else g.seatIdx=null;
+      }
+    });
+    gs.filter(g=>g.seatIdx==null).forEach(g=>{
+      let s=0;const cnt=g.personen||1;
+      outer:while(true){for(let i=s;i<s+cnt;i++){if(used.has(i)){s++;continue outer;}}break;}
+      g.seatIdx=s;for(let i=s;i<s+cnt;i++)used.add(i);
+    });
+  });
 }
 
 async function loadState(){
@@ -960,6 +982,76 @@ function splitGuestNames(name,count){
   return res.slice(0,count);
 }
 
+// ── Sitzplan Sitzplatz-Logik ──────────────────────────────────
+// Wer sitzt an Slot slotIdx an Tisch tischName?
+function guestAtSeat(tischName,slotIdx){
+  return ST.gaeste.find(g=>g.tisch===tischName&&g.seatIdx!=null&&g.status!=='Abgesagt'&&slotIdx>=g.seatIdx&&slotIdx<g.seatIdx+(g.personen||1))||null;
+}
+// Ersten freien Startslot für count konsekutive Plätze finden
+function nextFreeSlot(tischName,count,kapazitaet){
+  outer:for(let s=0;s<=kapazitaet-count;s++){
+    for(let i=0;i<count;i++){if(guestAtSeat(tischName,s+i))continue outer;}
+    return s;
+  }
+  return kapazitaet;
+}
+// seatIdx vergeben wenn noch nicht gesetzt
+function normalizeSeatIdx(g,tischName,kapazitaet){
+  if(g.seatIdx!=null)return;
+  g.seatIdx=nextFreeSlot(tischName,g.personen||1,kapazitaet);
+}
+
+let _drag=null, _sel=null;
+
+// Kern-Operation: Person bewegen / tauschen
+function moveSeat(srcGastId,tgtTisch,tgtSlotIdx){
+  const src=ST.gaeste.find(g=>g.id===srcGastId);if(!src)return;
+  const displaced=guestAtSeat(tgtTisch,tgtSlotIdx);
+  if(displaced&&displaced.id===srcGastId)return;
+  const srcHadSeat=!!(src.tisch);
+  const srcTisch=src.tisch,srcSlot=src.seatIdx;
+  src.tisch=tgtTisch;src.seatIdx=tgtSlotIdx;
+  if(displaced){
+    if(srcHadSeat){displaced.tisch=srcTisch;displaced.seatIdx=srcSlot;}
+    else{displaced.tisch='';displaced.seatIdx=null;}
+  }
+  saveState();renderSitzplan();
+}
+
+// Drag-Handler
+function onSeatDragStart(ev,gastId){
+  _drag={gastId};ev.dataTransfer.effectAllowed='move';ev.currentTarget.style.opacity='.4';
+}
+function onSeatDragEnd(ev){ev.currentTarget.style.opacity='';_drag=null;}
+function onUnassignedDragStart(ev,gastId){_drag={gastId};ev.dataTransfer.effectAllowed='move';}
+function onSeatDrop(ev,tischName,slotIdx){
+  ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.remove('drag-over');
+  if(!_drag)return;
+  const id=_drag.gastId;_drag=null;
+  moveSeat(id,tischName,slotIdx);
+}
+function onDragOver(ev){ev.preventDefault();ev.dataTransfer.dropEffect='move';}
+function onDragEnter(ev){ev.currentTarget.classList.add('drag-over');}
+function onDragLeave(ev){if(!ev.currentTarget.contains(ev.relatedTarget))ev.currentTarget.classList.remove('drag-over');}
+
+// Klick-Handler
+function onSeatClick(ev,gastId,tischName,slotIdx){
+  ev.stopPropagation();
+  if(_sel===null){_sel=gastId;renderTischGrid();renderUnassigned();}
+  else if(_sel===gastId){_sel=null;renderTischGrid();renderUnassigned();}
+  else{const id=_sel;_sel=null;moveSeat(id,tischName,slotIdx);}
+}
+function onEmptySeatClick(ev,tischName,slotIdx){
+  ev.stopPropagation();
+  if(!_sel)return;
+  const id=_sel;_sel=null;moveSeat(id,tischName,slotIdx);
+}
+function onUnassignedClick(gastId){
+  _sel=(_sel===gastId)?null:gastId;
+  renderTischGrid();renderUnassigned();
+}
+function renderSelBar(){}
+
 // ── Sitzplan ──────────────────────────────────────────────────
 let sitzplanView='sitzplan';
 function setSitzplanView(view){
@@ -1126,8 +1218,6 @@ function renderRaumplan(){
 
   container.innerHTML=html;
 }
-function renderSelBar(){}
-
 function renderSitzplanStats(){
   const tische=ST.sitzplan.tische;
   const allGuests=ST.gaeste.filter(g=>g.status!=='Abgesagt');
@@ -1147,31 +1237,37 @@ function renderTischGrid(){
   const container=document.getElementById('tisch-grid');
   let html='';
   ST.sitzplan.tische.forEach(tisch=>{
-    const guests=ST.gaeste.filter(g=>g.tisch===tisch.name&&g.status!=='Abgesagt');
-    const usedSeats=guests.reduce((s,g)=>s+g.personen,0);
+    const usedSeats=ST.gaeste.filter(g=>g.tisch===tisch.name&&g.status!=='Abgesagt').reduce((s,g)=>s+g.personen,0);
     const isOver=usedSeats>tisch.kapazitaet;
-    const totalSeats=tisch.kapazitaet;
-    const seats=new Array(totalSeats).fill(null);
-    let si=0;guests.forEach(g=>{const ns=splitGuestNames(g.name,g.personen);ns.forEach(dn=>{if(si<totalSeats)seats[si++]={displayName:dn,fullName:g.name,color:gc(g.gruppe),id:g.id,gruppe:g.gruppe};});});
-    const leftCount=2,topCount=Math.ceil((totalSeats-leftCount*2)/2),botCount=totalSeats-leftCount*2-topCount;
-    const topSeats=seats.slice(0,topCount),botSeats=seats.slice(topCount,topCount+botCount);
-    const leftSeats=seats.slice(topCount+botCount,topCount+botCount+leftCount),rightSeats=seats.slice(topCount+botCount+leftCount);
-    function rSeat(s){
-      if(!s)return`<div class="tisch-seat" title="Freier Platz"></div>`;
-      const ini=s.displayName.slice(0,5);
-      return`<div class="tisch-seat belegt" style="background:${s.color}" title="${e(s.displayName)} (${e(s.fullName)}) · ${e(s.gruppe)}">${e(ini)}<button class="seat-remove" onclick="removeGastFromTisch('${s.id}')" title="Vom Tisch entfernen">×</button></div>`;
+    // Sitze per Index rendern – Quelle der Wahrheit ist seatIdx, NICHT Array-Reihenfolge
+    const seatDivs=[];
+    for(let i=0;i<tisch.kapazitaet;i++){
+      const g=guestAtSeat(tisch.name,i);
+      if(!g){
+        const dc=_sel?' drop-target':'';
+        seatDivs.push(`<div class="tisch-seat${dc}" title="${_sel?'Hierhin setzen':'Freier Platz'}" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="onSeatDrop(event,'${e(tisch.name)}',${i})" onclick="onEmptySeatClick(event,'${e(tisch.name)}',${i})"></div>`);
+      }else{
+        const dn=splitGuestNames(g.name,g.personen)[i-g.seatIdx];
+        const ini=dn.slice(0,5);
+        const isSel=g.id===_sel;
+        const ec=(isSel?' selected':'')+(_sel&&!isSel?' drop-target':'');
+        seatDivs.push(`<div class="tisch-seat belegt${ec}" draggable="true" style="background:${gc(g.gruppe)}" title="${e(dn)} (${e(g.name)}) · ${e(g.gruppe)}" ondragstart="onSeatDragStart(event,'${g.id}')" ondragend="onSeatDragEnd(event)" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="onSeatDrop(event,'${e(tisch.name)}',${i})" onclick="onSeatClick(event,'${g.id}','${e(tisch.name)}',${i})">${e(ini)}<button class="seat-remove" onclick="event.stopPropagation();removeGastFromTisch('${g.id}')" title="Vom Tisch entfernen">×</button></div>`);
+      }
     }
+    const n=tisch.kapazitaet,lc=2,tc=Math.ceil((n-lc*2)/2),bc=n-lc*2-tc;
+    const topD=seatDivs.slice(0,tc),botD=seatDivs.slice(tc,tc+bc);
+    const leftD=seatDivs.slice(tc+bc,tc+bc+lc),rightD=seatDivs.slice(tc+bc+lc);
     html+=`<div class="tisch-visual-wrap">
-      <div class="tisch-seats-top">${topSeats.map(s=>rSeat(s)).join('')}</div>
+      <div class="tisch-seats-top">${topD.join('')}</div>
       <div class="tisch-middle-row">
-        <div class="tisch-seats-side">${leftSeats.map(s=>rSeat(s)).join('')}</div>
+        <div class="tisch-seats-side">${leftD.join('')}</div>
         <div class="tisch-surface${isOver?' over':''}">
           <span class="tisch-surface-name">${e(tisch.name)}</span>
           <span class="tisch-surface-cap${isOver?' over':''}">${usedSeats}/${tisch.kapazitaet} Plätze</span>
         </div>
-        <div class="tisch-seats-side">${rightSeats.map(s=>rSeat(s)).join('')}</div>
+        <div class="tisch-seats-side">${rightD.join('')}</div>
       </div>
-      <div class="tisch-seats-bottom">${botSeats.map(s=>rSeat(s)).join('')}</div>
+      <div class="tisch-seats-bottom">${botD.join('')}</div>
       <div class="tisch-visual-footer">
         <button class="btn btn-p btn-sm" onclick="openTischAssignModal('${e(tisch.name)}')">+ Gast</button>
         <button class="btn btn-d btn-sm" onclick="deleteTisch('${tisch.id}')">✕</button>
@@ -1190,11 +1286,18 @@ function renderUnassigned(){
   const container=document.getElementById('unassigned-list');if(!container)return;
   if(!allUnassigned.length){container.innerHTML='<p style="font-size:.82rem;color:var(--text-l);text-align:center;padding:12px 0">Alle Gäste zugewiesen! 🎉</p>';return;}
   if(!unassigned.length){container.innerHTML='<p style="font-size:.82rem;color:var(--text-l);text-align:center;padding:12px 0">Keine Treffer.</p>';return;}
-  container.innerHTML=unassigned.map(g=>`<div class="unassigned-guest">
-    <span class="unassigned-guest-gruppe" style="background:${gc(g.gruppe)}" title="${e(g.gruppe)}"></span>
-    <span class="unassigned-guest-name">${e(g.name)}</span>
-    <span style="font-size:.75rem;color:var(--text-l)">${g.personen>1?g.personen+'P':''}</span>
-  </div>`).join('');
+  container.innerHTML=unassigned.map(g=>{
+    const isSel=g.id===_sel;
+    return`<div class="unassigned-guest${isSel?' selected':''}" draggable="true"
+      ondragstart="onUnassignedDragStart(event,'${g.id}')"
+      onclick="onUnassignedClick('${g.id}')"
+      title="${isSel?'Nochmals klicken: Abbrechen | Dann Sitzplatz klicken':'Klicken oder Ziehen zum Platzieren'}">
+      <span class="unassigned-guest-gruppe" style="background:${gc(g.gruppe)}" title="${e(g.gruppe)}"></span>
+      <span class="unassigned-guest-name">${e(g.name)}</span>
+      <span style="font-size:.75rem;color:var(--text-l)">${g.personen>1?g.personen+'P':''}</span>
+      <span style="font-size:.75rem;color:${isSel?'var(--gold)':'var(--sage-d)'};margin-left:auto">${isSel?'✦':'→'}</span>
+    </div>`;
+  }).join('');
 }
 
 let assignTischName='';
@@ -1232,11 +1335,15 @@ function filterAssignList(){
 }
 function assignGastToTisch(gastId,tischName){
   const g=ST.gaeste.find(x=>x.id===gastId);if(!g)return;
-  g.tisch=tischName;saveState();filterAssignList();renderSitzplanStats();renderTischGrid();renderUnassigned();
+  if(g.tisch!==tischName){g.seatIdx=null;}
+  g.tisch=tischName;
+  const t=ST.sitzplan.tische.find(x=>x.name===tischName);
+  if(t)normalizeSeatIdx(g,tischName,t.kapazitaet);
+  saveState();filterAssignList();renderSitzplanStats();renderTischGrid();renderUnassigned();
 }
 function removeGastFromTisch(gastId){
   const g=ST.gaeste.find(x=>x.id===gastId);if(!g)return;
-  g.tisch='';saveState();renderSitzplan();
+  g.tisch='';g.seatIdx=null;saveState();renderSitzplan();
 }
 let _gastTischPickerId=null;
 function openGastTischPicker(gastId){
