@@ -1357,11 +1357,11 @@ function filterAssignList(){
 }
 function assignGastToTisch(gastId,tischName){
   const g=ST.gaeste.find(x=>x.id===gastId);if(!g)return;
-  g.tisch=tischName;saveState();filterAssignList();renderSitzplanStats();renderTischGrid();renderUnassigned();
+  if(g.tisch!==tischName)g.seatIdx=null;g.tisch=tischName;saveState();filterAssignList();renderSitzplanStats();renderTischGrid();renderUnassigned();
 }
 function removeGastFromTisch(gastId){
   const g=ST.gaeste.find(x=>x.id===gastId);if(!g)return;
-  g.tisch='';saveState();renderSitzplan();
+  g.tisch='';g.seatIdx=null;saveState();renderSitzplan();
 }
 let _gastTischPickerId=null;
 function openGastTischPicker(gastId){
