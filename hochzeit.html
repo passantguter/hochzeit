@@ -1003,11 +1003,32 @@ function normalizeSeatIdx(g,tischName,kapazitaet){
 
 let _drag=null, _sel=null;
 
+// Mehrpersonen-Gast in Einzelpersonen aufteilen; gibt die ID von subIdx zurück
+function splitGuest(gastId,subIdx){
+  const parent=ST.gaeste.find(g=>g.id===gastId);
+  if(!parent||parent.personen<=1)return gastId;
+  const names=splitGuestNames(parent.name,parent.personen);
+  const pos=ST.gaeste.indexOf(parent);
+  const newIds=names.map((_,i)=>i===0?parent.id:uid());
+  const splits=names.map((name,i)=>({...parent,id:newIds[i],name,personen:1,
+    seatIdx:parent.seatIdx!=null?parent.seatIdx+i:null}));
+  ST.gaeste.splice(pos,1,...splits);
+  return newIds[subIdx];
+}
+
+// Composite-ID auflösen (Format "gastId:subIdx" für Sub-Slots)
+function resolveGastId(compositeId){
+  if(!compositeId.includes(':'))return compositeId;
+  const [gastId,sub]=compositeId.split(':');
+  return splitGuest(gastId,parseInt(sub));
+}
+
 // Kern-Operation: Person bewegen / tauschen
-function moveSeat(srcGastId,tgtTisch,tgtSlotIdx){
-  const src=ST.gaeste.find(g=>g.id===srcGastId);if(!src)return;
+function moveSeat(srcCompositeId,tgtTisch,tgtSlotIdx){
+  const srcId=resolveGastId(srcCompositeId);
+  const src=ST.gaeste.find(g=>g.id===srcId);if(!src)return;
   const displaced=guestAtSeat(tgtTisch,tgtSlotIdx);
-  if(displaced&&displaced.id===srcGastId)return;
+  if(displaced&&displaced.id===srcId)return;
   const srcHadSeat=!!(src.tisch);
   const srcTisch=src.tisch,srcSlot=src.seatIdx;
   src.tisch=tgtTisch;src.seatIdx=tgtSlotIdx;
@@ -1247,11 +1268,13 @@ function renderTischGrid(){
         const dc=_sel?' drop-target':'';
         seatDivs.push(`<div class="tisch-seat${dc}" title="${_sel?'Hierhin setzen':'Freier Platz'}" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="onSeatDrop(event,'${e(tisch.name)}',${i})" onclick="onEmptySeatClick(event,'${e(tisch.name)}',${i})"></div>`);
       }else{
-        const dn=splitGuestNames(g.name,g.personen)[i-g.seatIdx];
+        const subIdx=i-g.seatIdx;
+        const did=subIdx===0?g.id:`${g.id}:${subIdx}`; // composite ID für Sub-Slots
+        const dn=splitGuestNames(g.name,g.personen)[subIdx];
         const ini=dn.slice(0,5);
-        const isSel=g.id===_sel;
+        const isSel=did===_sel;
         const ec=(isSel?' selected':'')+(_sel&&!isSel?' drop-target':'');
-        seatDivs.push(`<div class="tisch-seat belegt${ec}" draggable="true" style="background:${gc(g.gruppe)}" title="${e(dn)} (${e(g.name)}) · ${e(g.gruppe)}" ondragstart="onSeatDragStart(event,'${g.id}')" ondragend="onSeatDragEnd(event)" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="onSeatDrop(event,'${e(tisch.name)}',${i})" onclick="onSeatClick(event,'${g.id}','${e(tisch.name)}',${i})">${e(ini)}<button class="seat-remove" onclick="event.stopPropagation();removeGastFromTisch('${g.id}')" title="Vom Tisch entfernen">×</button></div>`);
+        seatDivs.push(`<div class="tisch-seat belegt${ec}" draggable="true" style="background:${gc(g.gruppe)}" title="${e(dn)} (${e(g.name)}) · ${e(g.gruppe)}" ondragstart="onSeatDragStart(event,'${did}')" ondragend="onSeatDragEnd(event)" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="onSeatDrop(event,'${e(tisch.name)}',${i})" onclick="onSeatClick(event,'${did}','${e(tisch.name)}',${i})">${e(ini)}<button class="seat-remove" onclick="event.stopPropagation();removeGastFromTisch('${did}')" title="Vom Tisch entfernen">×</button></div>`);
       }
     }
     const n=tisch.kapazitaet,lc=2,tc=Math.ceil((n-lc*2)/2),bc=n-lc*2-tc;
@@ -1341,8 +1364,9 @@ function assignGastToTisch(gastId,tischName){
   if(t)normalizeSeatIdx(g,tischName,t.kapazitaet);
   saveState();filterAssignList();renderSitzplanStats();renderTischGrid();renderUnassigned();
 }
-function removeGastFromTisch(gastId){
-  const g=ST.gaeste.find(x=>x.id===gastId);if(!g)return;
+function removeGastFromTisch(compositeId){
+  const id=resolveGastId(compositeId);
+  const g=ST.gaeste.find(x=>x.id===id);if(!g)return;
   g.tisch='';g.seatIdx=null;saveState();renderSitzplan();
 }
 let _gastTischPickerId=null;
