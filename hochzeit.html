@@ -986,21 +986,28 @@ function moveGuestToTableEnd(gastId,tischName){
   const src=ST.gaeste.find(g=>g.id===gastId);if(!src)return;
   src.tisch=tischName;
   const tableGs=ST.gaeste.filter(g=>g.tisch===tischName&&g.status!=='Abgesagt'&&g.id!==src.id);
-  let ai=0;tableGs.forEach(g=>{ai=Math.max(ai,g.seatIdx)+(g.personen||1);});
-  src.seatIdx=ai;
+  src.seatIdx=tableGs.reduce((m,g)=>Math.max(m,(g.seatIdx||0)+(g.personen||1)),0);
   const si=ST.gaeste.indexOf(src);ST.gaeste.splice(si,1);
   const lastIdx=ST.gaeste.reduce((l,g,i)=>(g.tisch===tischName&&g.status!=='Abgesagt')?i:l,-1);
   ST.gaeste.splice(lastIdx+1,0,src);
 }
+function placeGuestAtSeat(gastId,tischName,seatIdx){
+  initSeatIdx();
+  const src=ST.gaeste.find(g=>g.id===gastId);if(!src)return;
+  const crossTable=src.tisch!==tischName;
+  src.tisch=tischName;
+  src.seatIdx=seatIdx;
+  if(crossTable){
+    const si=ST.gaeste.indexOf(src);ST.gaeste.splice(si,1);
+    const lastIdx=ST.gaeste.reduce((l,g,i)=>(g.tisch===tischName&&g.status!=='Abgesagt')?i:l,-1);
+    ST.gaeste.splice(lastIdx+1,0,src);
+  }
+}
 function onEmptySeatClick(ev,tischName,seatIdx){
   ev.stopPropagation();
   if(!_selectedGastId)return;
-  const src=ST.gaeste.find(g=>g.id===_selectedGastId);
-  if(!src){_selectedGastId=null;renderTischGrid();return;}
-  const cross=src.tisch!==tischName;
-  _selectedGastId=null;
-  if(cross){moveGuestToTableEnd(src.id,tischName);}
-  else{initSeatIdx();src.seatIdx=seatIdx;}
+  const id=_selectedGastId;_selectedGastId=null;
+  placeGuestAtSeat(id,tischName,seatIdx);
   saveState();renderSitzplan();
 }
 function onTableSurfaceClick(tischName){
@@ -1021,7 +1028,11 @@ function onSeatDragStart(ev,gastId){
   if(_selectedGastId){_selectedGastId=null;renderTischGrid();}
   _dragGastId=gastId;_dragMoved=false;ev.dataTransfer.effectAllowed='move';ev.currentTarget.style.opacity='.4';
 }
-function onSeatDragEnd(ev){ev.currentTarget.style.opacity='';}
+function onSeatDragEnd(ev){ev.currentTarget.style.opacity='';_dragGastId=null;}
+function onUnassignedGuestClick(gastId){
+  _selectedGastId=(_selectedGastId===gastId)?null:gastId;
+  renderTischGrid();renderUnassigned();renderSelBar();
+}
 function onDragOver(ev){ev.preventDefault();ev.dataTransfer.dropEffect='move';}
 function onDragEnter(ev){ev.currentTarget.classList.add('drag-over');}
 function onDragLeave(ev){ev.currentTarget.classList.remove('drag-over');}
@@ -1036,10 +1047,9 @@ function onSeatDrop(ev,targetGastId,tischName,seatIdx){
 function onEmptySeatDrop(ev,tischName,seatIdx){
   ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.remove('drag-over');
   if(!_dragGastId)return;
-  const src=ST.gaeste.find(g=>g.id===_dragGastId);if(!src){_dragGastId=null;return;}
-  if(src.tisch!==tischName){moveGuestToTableEnd(_dragGastId,tischName);}
-  else{initSeatIdx();src.seatIdx=seatIdx;}
-  _dragGastId=null;_dragMoved=true;saveState();renderSitzplan();
+  const id=_dragGastId;_dragGastId=null;_dragMoved=true;
+  placeGuestAtSeat(id,tischName,seatIdx);
+  saveState();renderSitzplan();
 }
 function onTableSurfaceDrop(ev,tischName){
   ev.preventDefault();ev.currentTarget.classList.remove('drag-over');
@@ -1296,12 +1306,18 @@ function renderUnassigned(){
   const container=document.getElementById('unassigned-list');if(!container)return;
   if(!allUnassigned.length){container.innerHTML='<p style="font-size:.82rem;color:var(--text-l);text-align:center;padding:12px 0">Alle Gäste zugewiesen! 🎉</p>';return;}
   if(!unassigned.length){container.innerHTML='<p style="font-size:.82rem;color:var(--text-l);text-align:center;padding:12px 0">Keine Treffer.</p>';return;}
-  container.innerHTML=unassigned.map(g=>`<div class="unassigned-guest" onclick="openGastTischPicker('${g.id}')" title="Klicken zum Zuweisen">
-    <span class="unassigned-guest-gruppe" style="background:${gc(g.gruppe)}" title="${e(g.gruppe)}"></span>
-    <span class="unassigned-guest-name">${e(g.name)}</span>
-    <span style="font-size:.75rem;color:var(--text-l)">${g.personen>1?g.personen+'P':''}</span>
-    <span style="font-size:.75rem;color:var(--sage-d);margin-left:auto">→</span>
-  </div>`).join('');
+  container.innerHTML=unassigned.map(g=>{
+    const isSel=g.id===_selectedGastId;
+    return`<div class="unassigned-guest${isSel?' selected':''}" draggable="true"
+      ondragstart="onSeatDragStart(event,'${g.id}')" ondragend="onSeatDragEnd(event)"
+      onclick="onUnassignedGuestClick('${g.id}')"
+      title="${isSel?'Nochmals klicken: Abbrechen | Dann leeren Platz klicken':'Klicken oder Ziehen zum Platzieren'}">
+      <span class="unassigned-guest-gruppe" style="background:${gc(g.gruppe)}" title="${e(g.gruppe)}"></span>
+      <span class="unassigned-guest-name">${e(g.name)}</span>
+      <span style="font-size:.75rem;color:var(--text-l)">${g.personen>1?g.personen+'P':''}</span>
+      <span style="font-size:.75rem;color:${isSel?'var(--gold)':'var(--sage-d)'};margin-left:auto">${isSel?'✦':'→'}</span>
+    </div>`;
+  }).join('');
 }
 
 let assignTischName='';
