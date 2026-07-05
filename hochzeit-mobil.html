@@ -803,9 +803,40 @@ function saveState(){
   renderHome();
 }
 
+// Übernimmt einen vom Server geladenen Stand als neuen lokalen Stand und rendert die gerade
+// sichtbaren Bereiche neu. Gemeinsam genutzt vom Hintergrund-Polling (startSync) und der
+// Konflikt-Prüfung vor dem Speichern (_postToServer).
+function _adoptServerState(srv){
+  ST=srv;
+  migrate(ST);
+  localStorage.setItem(SK,JSON.stringify(ST));
+  renderHome();
+  if(activeTab==='gaeste')renderGuests();
+  if(activeTab==='budget')renderBudget();
+  if(activeTab==='todo')renderTodos();
+  if(activeTab==='sitzplan')renderSitzplan();
+  if(activeTab==='probetool')renderProbetool();
+  if(activeTab==='mehr')renderMehr();
+}
+
+// Schutz gegen Überschreiben neuerer Änderungen eines anderen Geräts: vor jedem Speichern wird
+// zuerst der aktuelle Server-Stand geprüft. Ist er neuer als unser lokaler Stand (_v höher), heißt
+// das, wir haben zwischenzeitliche Änderungen eines anderen Geräts noch nicht geladen – dann wird
+// NICHT blind überschrieben (das hätte diese Änderungen sonst gelöscht), sondern der neuere Stand
+// übernommen und die Person gebeten, ihre letzte Änderung hier einmal erneut vorzunehmen.
 async function _postToServer(){
   if(!JB_OK)return;
   try{
+    const check=await fetch(JB_URL+'/latest',{headers:{'X-Master-Key':JB_KEY}});
+    if(check.ok){
+      const srv=(await check.json()).record;
+      if(srv&&srv._v&&srv._v>ST._v){
+        _adoptServerState(srv);
+        setSyncDot('ok');
+        alert('Es gab zwischenzeitlich neuere Änderungen von einem anderen Gerät. Diese wurden gerade geladen – bitte deine letzte Änderung hier einmal erneut vornehmen.');
+        return;
+      }
+    }
     await fetch(JB_URL,{method:'PUT',headers:JB_HDR,body:JSON.stringify(ST)});
     setSyncDot('ok');
   }catch{ setSyncDot('err'); }
@@ -821,14 +852,7 @@ function startSync(){
       if(!r.ok)return;
       const srv=(await r.json()).record;
       if(srv&&srv._v&&srv._v>(ST._v||0)){
-        ST=srv;
-        migrate(ST);
-        localStorage.setItem(SK,JSON.stringify(ST));
-        renderHome();
-        if(activeTab==='gaeste')renderGuests();
-        if(activeTab==='budget')renderBudget();
-        if(activeTab==='todo')renderTodos();
-        if(activeTab==='mehr')renderMehr();
+        _adoptServerState(srv);
         setSyncDot('ok');
       }
     }catch{setSyncDot('err');}
