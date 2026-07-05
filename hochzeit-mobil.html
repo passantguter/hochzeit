@@ -1599,6 +1599,10 @@ function renderTischGrid(){
         <div class="tisch-surface${isOver?' over':''}">
           <span class="tisch-surface-name">${e(tisch.name)}</span>
           <span class="tisch-surface-cap${isOver?' over':''}">${usedSeats}/${tisch.kapazitaet} Plätze</span>
+          <span style="display:flex;gap:4px;margin-top:1px" onclick="event.stopPropagation()">
+            <button onclick="adjustTischKapazitaet('${tisch.id}',-1)" title="Kapazität verringern" style="border:1px solid var(--border);background:var(--white);border-radius:5px;width:20px;height:20px;cursor:pointer;line-height:1;font-size:.8rem">−</button>
+            <button onclick="adjustTischKapazitaet('${tisch.id}',1)" title="Kapazität erhöhen" style="border:1px solid var(--border);background:var(--white);border-radius:5px;width:20px;height:20px;cursor:pointer;line-height:1;font-size:.8rem">+</button>
+          </span>
         </div>
         <div class="tisch-seats-side">${rightD.join('')}</div>
       </div>
@@ -1757,6 +1761,13 @@ function deleteTisch(id){
   ST.sitzplan.tische=ST.sitzplan.tische.filter(x=>x.id!==id);
   _raumSelection=_raumSelection.filter(s=>!(s.kind==='tisch'&&s.id===id));
   saveState();renderSitzplan();
+}
+// Schnelle Kapazitätsänderung direkt am Tisch (ohne den Bearbeiten-Dialog öffnen zu müssen).
+function adjustTischKapazitaet(tischId,delta){
+  const t=ST.sitzplan.tische.find(x=>x.id===tischId);if(!t)return;
+  t.kapazitaet=Math.max(1,t.kapazitaet+delta);
+  saveState();
+  renderSitzplan();
 }
 let _editElementId=null;
 function applyElementTypeDefaults(){
