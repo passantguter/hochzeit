@@ -296,6 +296,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
       <button class="top-tab" onclick="showTab('budget',this,'top')">Budget</button>
       <button class="top-tab" onclick="showTab('todo',this,'top')">To-Do</button>
       <button class="top-tab" onclick="showTab('sitzplan',this,'top')">Sitzplan</button>
+      <button class="top-tab" onclick="showTab('probetool',this,'top')">Probetool</button>
       <button class="top-tab" onclick="showTab('mehr',this,'top')">Zeitplan &amp; Mehr</button>
     </div>
   </div>
@@ -468,6 +469,74 @@ html,body{height:100%;background:var(--bg);color:var(--text);
     </div>
   </div>
 
+  <!-- ══ PROBETOOL ══ -->
+  <div id="tab-probetool" class="tab">
+    <div style="margin-bottom:14px">
+      <span style="font-size:1.1rem;font-weight:700">Probetool: Sitzverteilung</span>
+      <div style="font-size:.82rem;color:var(--text-l);margin-top:2px">Separates Experimentierfeld – verändert den echten Sitzplan nicht. Ziel: jede·r kennt mind. 1, idealerweise 2 Personen am eigenen Tisch.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">1. Familie/Freunde-Zuordnung &amp; Alter prüfen</div>
+      <div style="font-size:.78rem;color:var(--text-l);margin-bottom:8px">Alle automatischen Vorbelegungen unten hängen davon ab, dass die Gruppe pro Gast stimmt (wirkt sich auch auf die Gästeliste aus). Alter ist optional und sorgt dafür, dass die Berechnung altersgerechte Tischnähe leicht bevorzugt.</div>
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="pt-zuordnung-search" placeholder="Gast suchen …" oninput="renderProbetoolZuordnung()">
+      </div>
+      <div id="probetool-zuordnung" style="max-height:340px;overflow-y:auto"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">2. Sitzplan-Kopie</div>
+      <div id="probetool-setup"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">3. Feste Gruppen (müssen zusammensitzen, z.B. Paare/Familien)</div>
+      <div id="probetool-gruppen" style="margin-bottom:10px"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-p btn-sm" onclick="openAddGruppeModal('zusammenhalten')">+ Gruppe hinzufügen</button>
+        <button class="btn btn-s btn-sm" onclick="uebernehmeGruppenAusSitzplan()">Paare aus Sitzplan übernehmen</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">4. Untergruppen (kennen sich gut, z.B. Freundeskreise)</div>
+      <div style="font-size:.78rem;color:var(--text-l);margin-bottom:8px">Für engere Cluster innerhalb größerer Gruppen (z.B. "Schulfreunde Jan") – wird bei der Vorbelegung unten wie "Familie" behandelt, aber ohne Zwang zum Zusammensitzen.</div>
+      <div id="probetool-untergruppen" style="margin-bottom:10px"></div>
+      <button class="btn btn-p btn-sm" onclick="openAddGruppeModal('bekanntengruppen')">+ Untergruppe hinzufügen</button>
+    </div>
+    <div class="card">
+      <div class="card-title">5. Wer kennt wen gut?</div>
+      <div style="font-size:.78rem;color:var(--text-l);margin-bottom:8px">🔒 Müssen zusammensitzen &nbsp;·&nbsp; 😊 Kennen sich gut &nbsp;·&nbsp; 🙂 Könnten harmonieren &nbsp;·&nbsp; ❌ Passen nicht zusammen</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="btn btn-s btn-sm" onclick="wendeKategorie2Vorbelegung()">😊 Kategorie 2 für Familien &amp; Untergruppen vorbelegen</button>
+        <button class="btn btn-s btn-sm" onclick="wendeKategorie4FamilieFreunde()">❌ Kategorie 4 für Familie ↔ Freunde vorbelegen</button>
+        <button class="btn btn-s btn-sm" onclick="wendeKategorie3UnterFreunden()">🙂 Kategorie 3 unter Freunden vorbelegen</button>
+      </div>
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="pt-anker-search" placeholder="Gast suchen (Anker) …" oninput="renderProbetoolAnkerList()">
+      </div>
+      <div id="pt-anker-list"></div>
+      <div id="pt-affinitaet-rows" style="margin-top:10px"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">6. Berechnen</div>
+      <button class="btn btn-p" onclick="computeProbetoolErgebnis()">Berechnen</button>
+      <span style="font-size:.78rem;color:var(--text-l);margin-left:8px">Erneuter Klick berechnet neu (anderer Zufallsstart, ggf. besseres Ergebnis).</span>
+    </div>
+    <div class="card" id="probetool-ergebnis-card" style="display:none">
+      <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;text-transform:none;letter-spacing:normal">
+        <span style="text-transform:uppercase;letter-spacing:.5px">7. Ergebnis</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-s btn-sm" onclick="copyProbetoolErgebnisAlsText()">📋 Als Text kopieren</button>
+          <button class="btn btn-p btn-sm" onclick="uebernehmeProbetoolAlsSitzplan()">✅ In echten Sitzplan übernehmen</button>
+        </div>
+      </div>
+      <div style="font-size:.78rem;color:var(--text-l);margin-bottom:8px">Wie im echten Sitzplan: Gast anklicken oder ziehen, um ihn auf einen anderen Platz zu verschieben. Änderungen hier bleiben zunächst nur im Probetool.</div>
+      <div class="tisch-grid" id="probetool-tisch-grid" style="margin-bottom:6px"></div>
+      <div id="probetool-unassigned" style="margin-bottom:18px"></div>
+      <div id="probetool-ergebnis"></div>
+    </div>
+  </div>
+
   <!-- ══ ZEITPLAN & MEHR ══ -->
   <div id="tab-mehr" class="tab">
     <div class="mehr-grid">
@@ -507,6 +576,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);
   <button class="nav-btn" onclick="showTab('sitzplan',this,'bot')">
     <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
     Sitzplan
+  </button>
+  <button class="nav-btn" onclick="showTab('probetool',this,'bot')">
+    <svg viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+    Probetool
   </button>
   <button class="nav-btn" onclick="showTab('mehr',this,'bot')">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
@@ -549,7 +622,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 <script>
 'use strict';
 // ── Data ──────────────────────────────────────────────────────
-const INITIAL_DATA={hochzeit:{datum:'2026-09-05',standesamt:'2026-09-04',location:'Badsaal Schnaittach',braut:'Paulina',braeutigam:'Jan',budget:15000},gaeste:[{id:'g1',name:'Josephine Chan',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g2',name:'Jossy Giesbrecht',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g3',name:'Emily + Frank',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g4',name:'Ee Laine',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g5',name:'Joel',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g6',name:'Chendi',personen:1,status:'Abgesagt',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g7',name:'Alan + Lynn',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g8',name:'Saki',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g9',name:'Grace',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g10',name:'Liz + Silas',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g11',name:'Jo (Pheline)',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g12',name:'Simon + Thea',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g13',name:'Mali',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g14',name:'Nina',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g15',name:'Ravil & Maftuna',personen:2,status:'Abgesagt',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g16',name:'Josi',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g17',name:'Ida',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g18',name:'Lorenz',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:'Friedrichstraße 50'},{id:'g19',name:'Rebekkah',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g20',name:'Lennart',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g21',name:'Anabel',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g22',name:'Fabi + Julie',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g23',name:'Reini + Tanja',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g24',name:'Ede + Cathy',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g25',name:'Bernhard + Heike',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g26',name:'Conny + Helmfried',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g27',name:'Isa',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g28',name:'Nadine',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g29',name:'Basti',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g30',name:'Oma',personen:1,status:'Abgesagt',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g31',name:'Eltern + Finja',personen:3,status:'Eingeladen',gruppe:'Familie Paulina',tisch:'',notiz:''},{id:'g32',name:'Dankwart + Martina',personen:2,status:'Eingeladen',gruppe:'Familie Paulina',tisch:'',notiz:''},{id:'g33',name:'Franzi + Steffen + Baby',personen:2,status:'Eingeladen',gruppe:'Familie Paulina',tisch:'',notiz:''},{id:'g34',name:'Ethan + Paula',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g35',name:'Yeri',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g36',name:'Mimi',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g37',name:'Louis + Nadine',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g38',name:'Nick',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g39',name:'Raphi + Esther',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g40',name:'Robin + Claudette + Kind',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g41',name:'Rahel Ziegler',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g42',name:'Chris + Freundin',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g43',name:'Jakob',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g44',name:'Luisa',personen:1,status:'Abgesagt',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g45',name:'Mia',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g46',name:'Joshi',personen:1,status:'Abgesagt',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g47',name:'David + Pauline',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g48',name:'Eltern + Kai',personen:3,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g49',name:'Heike + Sven',personen:2,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g50',name:'Görge + Antek + Ida',personen:3,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g51',name:'Sonja',personen:1,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g52',name:'Marlies + Albert',personen:2,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g53',name:'Arne',personen:1,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g54',name:'Waltraud + Norbert',personen:2,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g55',name:'Mai-Ly',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g56',name:'Jannis',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g57',name:'Jean',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g58',name:'Nick + Helene',personen:2,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g59',name:'Johann',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g60',name:'Ali',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g61',name:'Pablo',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g62',name:'Korbi',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g63',name:'Timo + Bekki',personen:2,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g64',name:'Flo',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g65',name:'Erik',personen:1,status:'Abgesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g66',name:'Jannis + Celine',personen:2,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:'Trauung nur?'},{id:'g67',name:'Hannes',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g68',name:'Ruben + Debby',personen:2,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g69',name:'Lukas',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g70',name:'Nico',personen:1,status:'Abgesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g71',name:'Karl',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g72',name:'Lucas + Caroline + Kinder',personen:5,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g73',name:'Markus & Daniela',personen:2,status:'Liste',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g74',name:'Max',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g75',name:'Bjarne',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g76',name:'Bene',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g77',name:'Elias',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g78',name:'Vero',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g79',name:'Gerrit',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g80',name:'Valentin',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g81',name:'Marie',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g82',name:'Paul',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g83',name:'Leon',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g84',name:'David Schnurr',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g85',name:'Jan + Paulina',personen:2,status:'Zugesagt',gruppe:'Brautpaar',tisch:'',notiz:''}],budget:{gesamtbudget:15000,kategorien:[{id:'b1',name:'Location',geschaetzt:0,tatsaechlich:0,notiz:'Badsaal Schnaittach – Vertrag unterschrieben'},{id:'b2',name:'Catering',geschaetzt:5778,tatsaechlich:0,notiz:'Grillmeister Pausch angefragt'},{id:'b3',name:'Getränke',geschaetzt:3000,tatsaechlich:0,notiz:''},{id:'b4',name:'Hochzeitstorte',geschaetzt:0,tatsaechlich:0,notiz:'Isa fragen'},{id:'b5',name:'Foto / Video',geschaetzt:500,tatsaechlich:0,notiz:''},{id:'b6',name:'Musik',geschaetzt:0,tatsaechlich:0,notiz:''},{id:'b7',name:'Ringe',geschaetzt:1217,tatsaechlich:1217,notiz:''},{id:'b8',name:'Kleidung',geschaetzt:1800,tatsaechlich:0,notiz:''},{id:'b9',name:'Brautstrauß',geschaetzt:0,tatsaechlich:0,notiz:''},{id:'b10',name:'Deko',geschaetzt:500,tatsaechlich:0,notiz:''},{id:'b11',name:'Trauungskosten',geschaetzt:200,tatsaechlich:0,notiz:''},{id:'b12',name:'Brunchen Standesamt',geschaetzt:240,tatsaechlich:0,notiz:''},{id:'b13',name:'Reserve',geschaetzt:1500,tatsaechlich:0,notiz:''},{id:'b14',name:'Sonstiges',geschaetzt:240,tatsaechlich:0,notiz:''}]},todos:[{id:'t1',text:'Einladung Gemeinde + Kuchen an Mimi',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Catering & Getränke'},{id:'t2',text:'Privat Leute wegen Kuchen anfragen',erledigt:false,verantwortlich:'',deadline:'',notiz:'Emails schreiben',kategorie:'Catering & Getränke'},{id:'t3',text:'Serviceteam Getränke Abend anfragen',erledigt:false,verantwortlich:'',deadline:'',notiz:'Danilo und Elias angefragt',kategorie:'Organisation'},{id:'t4',text:'Abspül- und Aufräumteam anfragen',erledigt:false,verantwortlich:'Jan Gehrke / Christine Gehrke',deadline:'',notiz:'',kategorie:'Organisation'},{id:'t5',text:'Aufräumteam für Badsaal',erledigt:false,verantwortlich:'Alex Schropp?',deadline:'',notiz:'',kategorie:'Organisation'},{id:'t6',text:'Abspülen Badsaal – nächster Tag?',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Organisation'},{id:'t7',text:'Übersetzer organisieren',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Zeremonie & Musik'},{id:'t8',text:'Sektempfang am Nachmittag klären',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Catering & Getränke'},{id:'t9',text:'Technik am Abend klären',erledigt:false,verantwortlich:'Medientechnik',deadline:'',notiz:'',kategorie:'Organisation'},{id:'t10',text:'Autos anfragen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Organisation'},{id:'t11',text:'Sitzordnung erstellen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Gäste'},{id:'t12',text:'Ringe bestellen',erledigt:true,verantwortlich:'',deadline:'',notiz:'',kategorie:'Persönliches'},{id:'t13',text:'Deko kaufen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Deko & Ausstattung'},{id:'t14',text:'Getränke kaufen',erledigt:false,verantwortlich:'Heinz',deadline:'',notiz:'Plan machen',kategorie:'Catering & Getränke'},{id:'t15',text:'Blumen bestellen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Deko & Ausstattung'},{id:'t16',text:'Brautstrauß bestellen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Deko & Ausstattung'},{id:'t17',text:'Standesamt Kleidung',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Kleidung'},{id:'t18',text:'Hochzeitstanz mit Kai absprechen',erledigt:false,verantwortlich:'Kai',deadline:'',notiz:'',kategorie:'Zeremonie & Musik'},{id:'t19',text:'Fotobox organisieren',erledigt:false,verantwortlich:'',deadline:'',notiz:'mit Polaroids',kategorie:'Deko & Ausstattung'},{id:'t20',text:'Gästebuch',erledigt:false,verantwortlich:'Helga',deadline:'',notiz:'',kategorie:'Deko & Ausstattung'},{id:'t21',text:'Gastgeschenke',erledigt:false,verantwortlich:'Helga',deadline:'',notiz:'',kategorie:'Deko & Ausstattung'},{id:'t22',text:'Achim nachhaken (Musikteam)',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Zeremonie & Musik'},{id:'t23',text:'Programm für Abend erstellen',erledigt:false,verantwortlich:'Papa',deadline:'',notiz:'An Papa geschickt',kategorie:'Zeremonie & Musik'},{id:'t24',text:'Ehevorbereitungskurs',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Persönliches'},{id:'t25',text:'Tanzkurs',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Persönliches'},{id:'t26',text:'Catering E-Mail abschicken',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Catering & Getränke'},{id:'t27',text:'Trautmode kaufen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Kleidung'},{id:'t28',text:'Schuhe kaufen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Kleidung'}],zeitplan:{freitag:[{id:'z1',zeit:'09:40',ende:'',titel:'Vor Ort sein',notiz:''},{id:'z2',zeit:'10:00',ende:'10:15',titel:'Standesamtliche Trauung',notiz:''},{id:'z3',zeit:'10:30',ende:'12:00',titel:'Brunchen – Cafe und Bar Celona',notiz:'Im Anschluss Standesamt'},{id:'z4',zeit:'16:40',ende:'',titel:'Fahrt des Brautpaares',notiz:''}],samstag:[{id:'z5',zeit:'12:30',ende:'12:40',titel:'Start / Einlass Gottesdienst',notiz:''},{id:'z6',zeit:'12:40',ende:'12:44',titel:'Einzug der Braut',notiz:'gratitude – instrumental, Piano'},{id:'z7',zeit:'12:44',ende:'12:50',titel:'Begrüßung + Hinführung',notiz:''},{id:'z8',zeit:'12:50',ende:'12:52',titel:'Gebet',notiz:''},{id:'z9',zeit:'12:52',ende:'12:56',titel:'Lied 1',notiz:'»So groß ist der Herr« – Chris Tomlin'},{id:'z10',zeit:'12:56',ende:'13:00',titel:'Sündenbekenntnis / Gebet',notiz:''},{id:'z11',zeit:'13:00',ende:'13:05',titel:'Lied 2',notiz:'»Bless the Lord, oh my soul«'},{id:'z12',zeit:'13:05',ende:'13:09',titel:'Textlesung',notiz:'Mimi oder Karl'},{id:'z13',zeit:'13:09',ende:'13:13',titel:'Lied 3',notiz:'»Thank you Jesus for the blood«'},{id:'z14',zeit:'13:13',ende:'13:33',titel:'Traupredigt',notiz:'Jan-Peter'},{id:'z15',zeit:'13:33',ende:'13:36',titel:'Musikalisches Zwischenspiel',notiz:''},{id:'z16',zeit:'13:36',ende:'13:49',titel:'Ehezeremonie',notiz:'Traufrage, Versprechen, Ringtausch, Segnung'},{id:'z17',zeit:'13:49',ende:'13:54',titel:'Grußwort & Informationen',notiz:''},{id:'z18',zeit:'13:58',ende:'14:05',titel:'Segenslied & Auszug des Brautpaares',notiz:'»Wenn ist mir wohl in dem Herrn«'},{id:'z19',zeit:'13:45',ende:'16:30',titel:'Kaffee / Kuchen / Sektempfang',notiz:'Torte 13:45 Uhr'},{id:'z20',zeit:'17:00',ende:'',titel:'Ankunft Badsaal Schnaittach',notiz:''},{id:'z21',zeit:'18:00',ende:'',titel:'Abendessen',notiz:''}]},dienstleister:[{id:'d1',kategorie:'Location',name:'Badsaal Schnaittach',kontakt:'',kosten:'',status:'Vertrag unterschrieben',notiz:'Türen zu 22:00 Uhr. Zehnertische. Klavier vorhanden.'},{id:'d2',kategorie:'Catering',name:'Grillmeister Pausch',kontakt:'',kosten:'225€ + 27,99€/Pers.',status:'Angefragt',notiz:''},{id:'d3',kategorie:'Catering',name:'Wahler Partyservice',kontakt:'',kosten:'ca. 6.500€',status:'Abgesagt',notiz:''},{id:'d4',kategorie:'Catering',name:'Gelbes Haus Partyservice',kontakt:'',kosten:'43€/Pers. + 710€',status:'Abgesagt',notiz:''},{id:'d5',kategorie:'Musik',name:'Nadine',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d6',kategorie:'Musik',name:'Rahel',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d7',kategorie:'Musik',name:'Christian',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d8',kategorie:'Musik',name:'Katherina',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d9',kategorie:'Musik',name:'Mirjam',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d10',kategorie:'Musik',name:'Clara',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d11',kategorie:'Musik',name:'Yeri',kontakt:'',kosten:'',status:'Angefragt',notiz:'Musikteam'},{id:'d12',kategorie:'Musik',name:'Achim',kontakt:'',kosten:'',status:'Angefragt',notiz:'Musikteamleitung – nachhaken!'},{id:'d13',kategorie:'Foto/Video',name:'Fotograf (offen)',kontakt:'',kosten:'500€ geplant',status:'Offen',notiz:''}],sitzplan:{tische:[]}};
+const INITIAL_DATA={hochzeit:{datum:'2026-09-05',standesamt:'2026-09-04',location:'Badsaal Schnaittach',braut:'Paulina',braeutigam:'Jan',budget:15000},gaeste:[{id:'g1',name:'Josephine Chan',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g2',name:'Jossy Giesbrecht',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g3',name:'Emily + Frank',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g4',name:'Ee Laine',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g5',name:'Joel',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g6',name:'Chendi',personen:1,status:'Abgesagt',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g7',name:'Alan + Lynn',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g8',name:'Saki',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g9',name:'Grace',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g10',name:'Liz + Silas',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g11',name:'Jo (Pheline)',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g12',name:'Simon + Thea',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g13',name:'Mali',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g14',name:'Nina',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g15',name:'Ravil & Maftuna',personen:2,status:'Abgesagt',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g16',name:'Josi',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g17',name:'Ida',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g18',name:'Lorenz',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:'Friedrichstraße 50'},{id:'g19',name:'Rebekkah',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g20',name:'Lennart',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g21',name:'Anabel',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g22',name:'Fabi + Julie',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g23',name:'Reini + Tanja',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g24',name:'Ede + Cathy',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g25',name:'Bernhard + Heike',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g26',name:'Conny + Helmfried',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g27',name:'Isa',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g28',name:'Nadine',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g29',name:'Basti',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g30',name:'Oma',personen:1,status:'Abgesagt',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g31',name:'Eltern + Finja',personen:3,status:'Eingeladen',gruppe:'Familie Paulina',tisch:'',notiz:''},{id:'g32',name:'Dankwart + Martina',personen:2,status:'Eingeladen',gruppe:'Familie Paulina',tisch:'',notiz:''},{id:'g33',name:'Franzi + Steffen + Baby',personen:2,status:'Eingeladen',gruppe:'Familie Paulina',tisch:'',notiz:''},{id:'g34',name:'Ethan + Paula',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g35',name:'Yeri',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g36',name:'Mimi',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g37',name:'Louis + Nadine',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g38',name:'Nick',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g39',name:'Raphi + Esther',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g40',name:'Robin + Claudette + Kind',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g41',name:'Rahel Ziegler',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g42',name:'Chris + Anna',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g43',name:'Jakob',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g44',name:'Luisa',personen:1,status:'Abgesagt',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g45',name:'Mia',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g46',name:'Joshi',personen:1,status:'Abgesagt',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g47',name:'David + Pauline',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g48',name:'Eltern + Kai',personen:3,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g49',name:'Heike + Sven',personen:2,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g50',name:'Görge + Antek + Ida',personen:3,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g51',name:'Sonja',personen:1,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g52',name:'Marlies + Albert',personen:2,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g53',name:'Arne',personen:1,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g54',name:'Waltraud + Norbert',personen:2,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g55',name:'Mai-Ly',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g56',name:'Jannis',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g57',name:'Jean',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g58',name:'Nick + Helene',personen:2,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g59',name:'Johann',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g60',name:'Ali',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g61',name:'Pablo',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g62',name:'Korbi',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g63',name:'Timo + Bekki',personen:2,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g64',name:'Flo',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g65',name:'Erik',personen:1,status:'Abgesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g66',name:'Jannis + Celine',personen:2,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:'Trauung nur?'},{id:'g67',name:'Hannes',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g68',name:'Ruben + Debby',personen:2,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g69',name:'Lukas',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g70',name:'Nico',personen:1,status:'Abgesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g71',name:'Karl',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g72',name:'Lucas + Caroline + Kinder',personen:5,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g73',name:'Markus & Daniela',personen:2,status:'Liste',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g74',name:'Max',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g75',name:'Bjarne',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g76',name:'Bene',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g77',name:'Elias',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g78',name:'Vero',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g79',name:'Gerrit',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g80',name:'Valentin',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g81',name:'Marie',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g82',name:'Paul',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g83',name:'Leon',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g84',name:'David Schnurr',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g85',name:'Jan + Paulina',personen:2,status:'Zugesagt',gruppe:'Brautpaar',tisch:'',notiz:''}],budget:{gesamtbudget:15000,kategorien:[{id:'b1',name:'Location',geschaetzt:0,tatsaechlich:0,notiz:'Badsaal Schnaittach – Vertrag unterschrieben'},{id:'b2',name:'Catering',geschaetzt:5778,tatsaechlich:0,notiz:'Grillmeister Pausch angefragt'},{id:'b3',name:'Getränke',geschaetzt:3000,tatsaechlich:0,notiz:''},{id:'b4',name:'Hochzeitstorte',geschaetzt:0,tatsaechlich:0,notiz:'Isa fragen'},{id:'b5',name:'Foto / Video',geschaetzt:500,tatsaechlich:0,notiz:''},{id:'b6',name:'Musik',geschaetzt:0,tatsaechlich:0,notiz:''},{id:'b7',name:'Ringe',geschaetzt:1217,tatsaechlich:1217,notiz:''},{id:'b8',name:'Kleidung',geschaetzt:1800,tatsaechlich:0,notiz:''},{id:'b9',name:'Brautstrauß',geschaetzt:0,tatsaechlich:0,notiz:''},{id:'b10',name:'Deko',geschaetzt:500,tatsaechlich:0,notiz:''},{id:'b11',name:'Trauungskosten',geschaetzt:200,tatsaechlich:0,notiz:''},{id:'b12',name:'Brunchen Standesamt',geschaetzt:240,tatsaechlich:0,notiz:''},{id:'b13',name:'Reserve',geschaetzt:1500,tatsaechlich:0,notiz:''},{id:'b14',name:'Sonstiges',geschaetzt:240,tatsaechlich:0,notiz:''}]},todos:[{id:'t1',text:'Einladung Gemeinde + Kuchen an Mimi',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Catering & Getränke'},{id:'t2',text:'Privat Leute wegen Kuchen anfragen',erledigt:false,verantwortlich:'',deadline:'',notiz:'Emails schreiben',kategorie:'Catering & Getränke'},{id:'t3',text:'Serviceteam Getränke Abend anfragen',erledigt:false,verantwortlich:'',deadline:'',notiz:'Danilo und Elias angefragt',kategorie:'Organisation'},{id:'t4',text:'Abspül- und Aufräumteam anfragen',erledigt:false,verantwortlich:'Jan Gehrke / Christine Gehrke',deadline:'',notiz:'',kategorie:'Organisation'},{id:'t5',text:'Aufräumteam für Badsaal',erledigt:false,verantwortlich:'Alex Schropp?',deadline:'',notiz:'',kategorie:'Organisation'},{id:'t6',text:'Abspülen Badsaal – nächster Tag?',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Organisation'},{id:'t7',text:'Übersetzer organisieren',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Zeremonie & Musik'},{id:'t8',text:'Sektempfang am Nachmittag klären',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Catering & Getränke'},{id:'t9',text:'Technik am Abend klären',erledigt:false,verantwortlich:'Medientechnik',deadline:'',notiz:'',kategorie:'Organisation'},{id:'t10',text:'Autos anfragen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Organisation'},{id:'t11',text:'Sitzordnung erstellen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Gäste'},{id:'t12',text:'Ringe bestellen',erledigt:true,verantwortlich:'',deadline:'',notiz:'',kategorie:'Persönliches'},{id:'t13',text:'Deko kaufen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Deko & Ausstattung'},{id:'t14',text:'Getränke kaufen',erledigt:false,verantwortlich:'Heinz',deadline:'',notiz:'Plan machen',kategorie:'Catering & Getränke'},{id:'t15',text:'Blumen bestellen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Deko & Ausstattung'},{id:'t16',text:'Brautstrauß bestellen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Deko & Ausstattung'},{id:'t17',text:'Standesamt Kleidung',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Kleidung'},{id:'t18',text:'Hochzeitstanz mit Kai absprechen',erledigt:false,verantwortlich:'Kai',deadline:'',notiz:'',kategorie:'Zeremonie & Musik'},{id:'t19',text:'Fotobox organisieren',erledigt:false,verantwortlich:'',deadline:'',notiz:'mit Polaroids',kategorie:'Deko & Ausstattung'},{id:'t20',text:'Gästebuch',erledigt:false,verantwortlich:'Helga',deadline:'',notiz:'',kategorie:'Deko & Ausstattung'},{id:'t21',text:'Gastgeschenke',erledigt:false,verantwortlich:'Helga',deadline:'',notiz:'',kategorie:'Deko & Ausstattung'},{id:'t22',text:'Achim nachhaken (Musikteam)',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Zeremonie & Musik'},{id:'t23',text:'Programm für Abend erstellen',erledigt:false,verantwortlich:'Papa',deadline:'',notiz:'An Papa geschickt',kategorie:'Zeremonie & Musik'},{id:'t24',text:'Ehevorbereitungskurs',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Persönliches'},{id:'t25',text:'Tanzkurs',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Persönliches'},{id:'t26',text:'Catering E-Mail abschicken',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Catering & Getränke'},{id:'t27',text:'Trautmode kaufen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Kleidung'},{id:'t28',text:'Schuhe kaufen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Kleidung'}],zeitplan:{freitag:[{id:'z1',zeit:'09:40',ende:'',titel:'Vor Ort sein',notiz:''},{id:'z2',zeit:'10:00',ende:'10:15',titel:'Standesamtliche Trauung',notiz:''},{id:'z3',zeit:'10:30',ende:'12:00',titel:'Brunchen – Cafe und Bar Celona',notiz:'Im Anschluss Standesamt'},{id:'z4',zeit:'16:40',ende:'',titel:'Fahrt des Brautpaares',notiz:''}],samstag:[{id:'z5',zeit:'12:30',ende:'12:40',titel:'Start / Einlass Gottesdienst',notiz:''},{id:'z6',zeit:'12:40',ende:'12:44',titel:'Einzug der Braut',notiz:'gratitude – instrumental, Piano'},{id:'z7',zeit:'12:44',ende:'12:50',titel:'Begrüßung + Hinführung',notiz:''},{id:'z8',zeit:'12:50',ende:'12:52',titel:'Gebet',notiz:''},{id:'z9',zeit:'12:52',ende:'12:56',titel:'Lied 1',notiz:'»So groß ist der Herr« – Chris Tomlin'},{id:'z10',zeit:'12:56',ende:'13:00',titel:'Sündenbekenntnis / Gebet',notiz:''},{id:'z11',zeit:'13:00',ende:'13:05',titel:'Lied 2',notiz:'»Bless the Lord, oh my soul«'},{id:'z12',zeit:'13:05',ende:'13:09',titel:'Textlesung',notiz:'Mimi oder Karl'},{id:'z13',zeit:'13:09',ende:'13:13',titel:'Lied 3',notiz:'»Thank you Jesus for the blood«'},{id:'z14',zeit:'13:13',ende:'13:33',titel:'Traupredigt',notiz:'Jan-Peter'},{id:'z15',zeit:'13:33',ende:'13:36',titel:'Musikalisches Zwischenspiel',notiz:''},{id:'z16',zeit:'13:36',ende:'13:49',titel:'Ehezeremonie',notiz:'Traufrage, Versprechen, Ringtausch, Segnung'},{id:'z17',zeit:'13:49',ende:'13:54',titel:'Grußwort & Informationen',notiz:''},{id:'z18',zeit:'13:58',ende:'14:05',titel:'Segenslied & Auszug des Brautpaares',notiz:'»Wenn ist mir wohl in dem Herrn«'},{id:'z19',zeit:'13:45',ende:'16:30',titel:'Kaffee / Kuchen / Sektempfang',notiz:'Torte 13:45 Uhr'},{id:'z20',zeit:'17:00',ende:'',titel:'Ankunft Badsaal Schnaittach',notiz:''},{id:'z21',zeit:'18:00',ende:'',titel:'Abendessen',notiz:''}]},dienstleister:[{id:'d1',kategorie:'Location',name:'Badsaal Schnaittach',kontakt:'',kosten:'',status:'Vertrag unterschrieben',notiz:'Türen zu 22:00 Uhr. Zehnertische. Klavier vorhanden.'},{id:'d2',kategorie:'Catering',name:'Grillmeister Pausch',kontakt:'',kosten:'225€ + 27,99€/Pers.',status:'Angefragt',notiz:''},{id:'d3',kategorie:'Catering',name:'Wahler Partyservice',kontakt:'',kosten:'ca. 6.500€',status:'Abgesagt',notiz:''},{id:'d4',kategorie:'Catering',name:'Gelbes Haus Partyservice',kontakt:'',kosten:'43€/Pers. + 710€',status:'Abgesagt',notiz:''},{id:'d5',kategorie:'Musik',name:'Nadine',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d6',kategorie:'Musik',name:'Rahel',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d7',kategorie:'Musik',name:'Christian',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d8',kategorie:'Musik',name:'Katherina',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d9',kategorie:'Musik',name:'Mirjam',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d10',kategorie:'Musik',name:'Clara',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d11',kategorie:'Musik',name:'Yeri',kontakt:'',kosten:'',status:'Angefragt',notiz:'Musikteam'},{id:'d12',kategorie:'Musik',name:'Achim',kontakt:'',kosten:'',status:'Angefragt',notiz:'Musikteamleitung – nachhaken!'},{id:'d13',kategorie:'Foto/Video',name:'Fotograf (offen)',kontakt:'',kosten:'500€ geplant',status:'Offen',notiz:''}],sitzplan:{tische:[]}};
 
 // ── State ──────────────────────────────────────────────────────
 // ── Adressen – immer auffüllen, nie überschreiben ────────────
@@ -599,13 +672,47 @@ const JB_OK  = JB_ID !== 'DEINE_BIN_ID'; // true sobald Keys eingetragen
 const SK='hochzeit_data';
 let ST, _syncTimer=null, _syncing=false;
 
+// Bekannte Sammelbegriffe, deren echte Einzel-Vornamen wir kennen
+const GAST_NAME_FIXES={
+  'Görge + Kinder':['Görge','Antek','Ida'],
+  'Chris + Freundin':['Chris','Anna']
+};
+// Generische Sammelbegriffe ohne auflösbaren Einzelnamen (z.B. "... + Kind") – werden beim Zerlegen
+// eines "+"-Namens ignoriert, damit die verbleibenden ECHTEN Namen trotzdem erkannt werden
+// (z.B. "Robin + Claudette + Kind" -> ["Robin","Claudette"], auch wenn personen davon abweicht).
+const PT_SAMMELBEGRIFFE=['kind','kinder','eltern','baby','familie'];
+function ptEchteNamen(name){
+  return name.split(/\s*[+&]\s*/).map(p=>p.trim()).filter(Boolean).filter(p=>!PT_SAMMELBEGRIFFE.includes(p.toLowerCase()));
+}
+// Alle Mehrpersonen-Gäste dauerhaft in Einzelpersonen aufteilen (statt Laufzeit-Splitting im Sitzplan)
+function splitAlleMehrpersonenGaeste(data){
+  const result=[];
+  data.gaeste.forEach(g=>{
+    if(!g.personen||g.personen<=1){result.push(g);return;}
+    let names=GAST_NAME_FIXES[g.name];
+    if(!names){
+      const parts=ptEchteNamen(g.name);
+      if(parts.length===g.personen)names=parts;
+    }
+    if(!names){result.push(g);return;} // Sammelbegriff ohne bekannte Einzelnamen (z.B. "Eltern"/"Kind") -> unverändert lassen
+    names.forEach((name,i)=>{
+      result.push({...g,id:i===0?g.id:uid(),name,personen:1,
+        seatIdx:g.seatIdx!=null?g.seatIdx+i:null});
+    });
+  });
+  data.gaeste=result;
+}
 function migrate(data){
+  splitAlleMehrpersonenGaeste(data);
+  data.gaeste.forEach(g=>{if(g.alter===undefined)g.alter=null;});
   if(!data.sitzplan)data.sitzplan={tische:[],elemente:[]};
   data.todos.forEach(t=>{if(!t.kategorie)t.kategorie='Organisation';});
   data.sitzplan.tische.forEach(t=>{
     if(t.raumX===undefined)t.raumX=null;
     if(t.raumY===undefined)t.raumY=null;
     if(t.raumRot===undefined)t.raumRot=0;
+    if(t.w===undefined)t.w=tischSizeM(t.kapazitaet).w;
+    if(t.h===undefined)t.h=tischSizeM(t.kapazitaet).h;
   });
   if(!data.sitzplan.elemente)data.sitzplan.elemente=[];
   data.sitzplan.elemente.forEach(el=>{
@@ -638,6 +745,30 @@ function migrate(data){
       outer:while(true){for(let i=s;i<s+cnt;i++){if(used.has(i)){s++;continue outer;}}break;}
       g.seatIdx=s;for(let i=s;i<s+cnt;i++)used.add(i);
     });
+  });
+  // Probetool: feste Gruppen + Untergruppen + Bekanntheits-Daten
+  if(!data.zusammenhalten)data.zusammenhalten=[];
+  if(!data.bekanntengruppen)data.bekanntengruppen=[];
+  if(!data.probetool)data.probetool={tische:[],affinitaet:{},startZuweisung:{},ergebnis:null};
+  if(!data.probetool.tische)data.probetool.tische=[];
+  data.probetool.tische.forEach(t=>{if(t.kapazitaetBasis===undefined)t.kapazitaetBasis=t.kapazitaet;});
+  if(!data.probetool.affinitaet)data.probetool.affinitaet={};
+  if(!data.probetool.startZuweisung)data.probetool.startZuweisung={};
+  if(data.probetool.ergebnis===undefined)data.probetool.ergebnis=null;
+  // Verwaiste Referenzen bereinigen (Gast gelöscht, aber noch in Gruppe/Affinität referenziert)
+  const validIds=new Set(data.gaeste.map(g=>g.id));
+  data.zusammenhalten=data.zusammenhalten
+    .map(z=>({...z,gastIds:z.gastIds.filter(id=>validIds.has(id))}))
+    .filter(z=>z.gastIds.length>=2);
+  data.bekanntengruppen=data.bekanntengruppen
+    .map(z=>({...z,gastIds:z.gastIds.filter(id=>validIds.has(id))}))
+    .filter(z=>z.gastIds.length>=2);
+  Object.keys(data.probetool.affinitaet).forEach(k=>{
+    const[a,b]=k.split('|');
+    if(!validIds.has(a)||!validIds.has(b))delete data.probetool.affinitaet[k];
+  });
+  Object.keys(data.probetool.startZuweisung).forEach(id=>{
+    if(!validIds.has(id))delete data.probetool.startZuweisung[id];
   });
 }
 
@@ -750,6 +881,7 @@ function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').re
 function fmt(n){return Number(n).toLocaleString('de-DE');}
 const GC={'Brautpaar':'#c4943a','Freunde Paulina':'#c9897a','Familie Paulina':'#9b86bd','Gemeinsame Freunde':'#6aaa96','Familie Jan':'#7a9e7e','Freunde Jan':'#7a9abf'};
 function gc(g){return GC[g]||'#aaa';}
+const ALLE_GRUPPEN=['Freunde Paulina','Familie Paulina','Gemeinsame Freunde','Familie Jan','Freunde Jan','Brautpaar'];
 function scls(s){return {Zugesagt:'b-z',Eingeladen:'b-e',Abgesagt:'b-a',Liste:'b-l'}[s]||'b-l';}
 function dlcls(s){return {'Zugesagt':'b-z','Vertrag unterschrieben':'b-z','Abgesagt':'b-a','Angefragt':'b-e','Offen':'b-l'}[s]||'b-l';}
 function uid(){return '_'+Math.random().toString(36).slice(2,9);}
@@ -784,6 +916,7 @@ function showTab(id,btn,src){
   if(id==='budget')   renderBudget();
   if(id==='todo')     renderTodos();
   if(id==='sitzplan') renderSitzplan();
+  if(id==='probetool')renderProbetool();
   if(id==='mehr')     renderMehr();
 }
 
@@ -1010,6 +1143,12 @@ function guestAtSeat(tischName,slotIdx){
 function nextFreeSlot(tischName,count,kapazitaet){
   outer:for(let s=0;s<=kapazitaet-count;s++){
     for(let i=0;i<count;i++){if(guestAtSeat(tischName,s+i))continue outer;}
+    return s;
+  }
+  // Tisch voll: fortlaufende Überlauf-Slots vergeben, damit sich mehrere
+  // Über-Kapazität-Gäste nicht denselben seatIdx teilen (sonst wird einer unsichtbar)
+  outer2:for(let s=kapazitaet;s<kapazitaet+200;s++){
+    for(let i=0;i<count;i++){if(guestAtSeat(tischName,s+i))continue outer2;}
     return s;
   }
   return kapazitaet;
@@ -1261,8 +1400,8 @@ function renderRaumplan(){
   // Flächen
   const saalFlaeche=247; // m²
   const buehneFlaeche=39; // m² (zusätzlich)
-  const tischFlaeche=tische.reduce((s,t)=>{const sz=tischSizeM(t.kapazitaet);return s+(sz.w*sz.h);},0);
-  const tischMitAbstand=tische.reduce((s,t)=>{const sz=tischSizeM(t.kapazitaet);return s+((sz.w+abstand)*(sz.h+abstand));},0);
+  const tischFlaeche=tische.reduce((s,t)=>{const w=t.w||tischSizeM(t.kapazitaet).w,h=t.h||tischSizeM(t.kapazitaet).h;return s+(w*h);},0);
+  const tischMitAbstand=tische.reduce((s,t)=>{const w=t.w||tischSizeM(t.kapazitaet).w,h=t.h||tischSizeM(t.kapazitaet).h;return s+((w+abstand)*(h+abstand));},0);
   const restFlaeche=Math.max(0,saalFlaeche-tischMitAbstand);
 
   // Koordinaten in % des Gesamt-Canvas
@@ -1320,7 +1459,8 @@ function renderRaumplan(){
   tische.forEach((t,idx)=>{
     const pos=(t.raumX!==null&&t.raumY!==null)?{x:t.raumX,y:t.raumY}:defaultRaumPos(idx);
     const rot=t.raumRot||0; // 0-359°, echte CSS-Rotation statt Breite/Höhe-Tausch
-    const sz=tischSizeM(t.kapazitaet); // Zehnertisch 210×140 · Zwölfertisch 280×140
+    const def=tischSizeM(t.kapazitaet); // Zehnertisch 210×140 · Zwölfertisch 280×140 (Standard, falls kein eigenes Maß gesetzt)
+    const sz={w:t.w||def.w,h:t.h||def.h};
     const tWpct=(sz.w/RP.totW)*100, tHpct=(sz.h/RP.totH)*100; // immer Basisgröße (unrotiert)
     const abstandWpct=(abstand/RP.totW)*100, abstandHpct=(abstand/RP.totH)*100;
     const guests=ST.gaeste.filter(g=>g.tisch===t.name&&g.status==='Zugesagt');
@@ -1340,10 +1480,13 @@ function renderRaumplan(){
       ondragstart="onTischDragStartInRoom(event,'${t.id}')"
       ondragend="onTischDragEndInRoom(event)"
       style="left:${left}%;top:${top}%;width:${tWpct}%;height:${tHpct}%;cursor:grab;--rot:${rot}deg;transform:rotate(var(--rot))"
-      title="${e(t.name)}: ${count}/${t.kapazitaet} · ${Math.round(sz.w*100)}×${Math.round(sz.h*100)} cm · ${rot}°&#10;Klick: auswählen (Shift: mehrere) · Pfeiltasten: verschieben · Drag: verschieben · ↻: +90° · ‹›: ±15°">
+      title="${e(t.name)}: ${count}/${t.kapazitaet} · ${Math.round(sz.w*100)}×${Math.round(sz.h*100)} cm · ${rot}°&#10;Klick: auswählen (Shift: mehrere) · Pfeiltasten: verschieben · Drag: verschieben · ↻: +90° · ‹›: ±15° · ✎: Größe bearbeiten">
       <div class="raumplan-tisch-name">${e(t.name)}</div>
       <div class="raumplan-tisch-count" style="color:${isOver?'var(--rose-d)':'var(--text-l)'}">${count}/${t.kapazitaet} · ${rot}°</div>
       <div class="raumplan-tisch-dots">${colors.map(c=>`<span style="width:6px;height:6px;border-radius:50%;background:${c}"></span>`).join('')}</div>
+      <button onclick="event.stopPropagation();openEditTischModal('${t.id}')"
+        style="position:absolute;top:2px;left:2px;border:none;background:transparent;font-size:.7rem;cursor:pointer;opacity:.6;padding:1px 3px;border-radius:3px;line-height:1"
+        title="Größe/Name bearbeiten">✎</button>
       <button onclick="event.stopPropagation();rotateTischInRoom('${t.id}')"
         style="position:absolute;top:2px;right:2px;border:none;background:transparent;font-size:.7rem;cursor:pointer;opacity:.6;padding:1px 3px;border-radius:3px;line-height:1"
         title="+90°">↻</button>
@@ -1395,7 +1538,7 @@ function renderRaumplan(){
 
   html+=`<div class="raumplan-legend">
     <span>🖱 Klick: auswählen &nbsp;·&nbsp; Shift+Klick: mehrere auswählen &nbsp;·&nbsp; Drag oder Pfeiltasten: (mehrfach) verschieben</span>
-    <span>↻: +90° &nbsp;·&nbsp; ‹›: ±15° Feinjustierung (Tische) &nbsp;·&nbsp; ✎: Größe/Typ bearbeiten (Elemente) &nbsp;·&nbsp; ✕: löschen (Elemente)</span>
+    <span>↻: +90° &nbsp;·&nbsp; ‹›: ±15° Feinjustierung (Tische) &nbsp;·&nbsp; ✎: Größe/Name/Typ bearbeiten &nbsp;·&nbsp; ✕: löschen (Elemente)</span>
     <span>🟩 gestrichelt: Tisch inkl. Abstandszone</span>
     <span>📏 Maßstab: Zehnertisch 210×140 cm · Zwölfertisch 280×140 cm</span>
     <span>🍸 Bar &nbsp;·&nbsp; 🍽️ Catering-Tisch &nbsp;·&nbsp; 📸 Fotoecke</span>
@@ -1427,12 +1570,14 @@ function renderTischGrid(){
     const isOver=usedSeats>tisch.kapazitaet;
     // Sitze per Index rendern – Quelle der Wahrheit ist seatIdx, NICHT Array-Reihenfolge
     const seatDivs=[];
+    const renderedIds=new Set();
     for(let i=0;i<tisch.kapazitaet;i++){
       const g=guestAtSeat(tisch.name,i);
       if(!g){
         const dc=_sel?' drop-target':'';
         seatDivs.push(`<div class="tisch-seat${dc}" title="${_sel?'Hierhin setzen':'Freier Platz'}" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="onSeatDrop(event,'${e(tisch.name)}',${i})" onclick="onEmptySeatClick(event,'${e(tisch.name)}',${i})"></div>`);
       }else{
+        renderedIds.add(g.id);
         const subIdx=i-g.seatIdx;
         const did=subIdx===0?g.id:`${g.id}:${subIdx}`; // composite ID für Sub-Slots
         const dn=splitGuestNames(g.name,g.personen)[subIdx];
@@ -1442,6 +1587,8 @@ function renderTischGrid(){
         seatDivs.push(`<div class="tisch-seat belegt${ec}" draggable="true" style="background:${gc(g.gruppe)}" title="${e(dn)} (${e(g.name)}) · ${e(g.gruppe)}" ondragstart="onSeatDragStart(event,'${did}')" ondragend="onSeatDragEnd(event)" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="onSeatDrop(event,'${e(tisch.name)}',${i})" onclick="onSeatClick(event,'${did}','${e(tisch.name)}',${i})">${e(ini)}<button class="seat-remove" onclick="event.stopPropagation();removeGastFromTisch('${did}')" title="Vom Tisch entfernen">×</button></div>`);
       }
     }
+    // Über-Kapazität-Gäste: dem Tisch zugewiesen, aber ohne sichtbaren Platz im Raster (seatIdx >= kapazitaet)
+    const overflow=ST.gaeste.filter(g=>g.tisch===tisch.name&&g.status==='Zugesagt'&&!renderedIds.has(g.id));
     const n=tisch.kapazitaet,lc=2,tc=Math.ceil((n-lc*2)/2),bc=n-lc*2-tc;
     const topD=seatDivs.slice(0,tc),botD=seatDivs.slice(tc,tc+bc);
     const leftD=seatDivs.slice(tc+bc,tc+bc+lc),rightD=seatDivs.slice(tc+bc+lc);
@@ -1456,6 +1603,7 @@ function renderTischGrid(){
         <div class="tisch-seats-side">${rightD.join('')}</div>
       </div>
       <div class="tisch-seats-bottom">${botD.join('')}</div>
+      ${overflow.length?`<div style="margin-top:6px;padding:6px 8px;background:#fde8e8;border-radius:8px;font-size:.78rem;color:var(--rose-d);max-width:220px;text-align:center">⚠ Über Kapazität, ohne Platz im Raster:<br>${overflow.map(g=>`${e(g.name)} <button onclick="removeGastFromTisch('${g.id}')" style="border:none;background:transparent;color:var(--rose-d);cursor:pointer;font-weight:700;padding:0 3px" title="Vom Tisch entfernen">×</button>`).join(' · ')}</div>`:''}
       <div class="tisch-visual-footer">
         <button class="btn btn-p btn-sm" onclick="openTischAssignModal('${e(tisch.name)}')">+ Gast</button>
         <button class="btn btn-d btn-sm" onclick="deleteTisch('${tisch.id}')">✕</button>
@@ -1559,12 +1707,46 @@ function assignGastFromPicker(tischId){
   if(g)g.tisch=t.name;
   closeGastTischPicker();saveState();renderSitzplan();
 }
-function openAddTischModal(){document.getElementById('new-tisch-name').value='';document.getElementById('new-tisch-kap').value='10';document.getElementById('add-tisch-modal').style.display='flex';}
-function closeAddTischModal(){document.getElementById('add-tisch-modal').style.display='none';}
+let _editTischId=null;
+function applyTischSizeDefaults(){
+  const kap=parseInt(document.getElementById('new-tisch-kap').value)||10;
+  const sz=tischSizeM(kap);
+  document.getElementById('new-tisch-w').value=sz.w;
+  document.getElementById('new-tisch-h').value=sz.h;
+}
+function openAddTischModal(){
+  _editTischId=null;
+  document.getElementById('add-tisch-modal-title').textContent='Tisch hinzufügen';
+  document.getElementById('new-tisch-name').value='';
+  document.getElementById('new-tisch-kap').value='10';
+  applyTischSizeDefaults();
+  document.getElementById('add-tisch-modal').style.display='flex';
+}
+function openEditTischModal(id){
+  const t=ST.sitzplan.tische.find(x=>x.id===id);if(!t)return;
+  _editTischId=id;
+  document.getElementById('add-tisch-modal-title').textContent='Tisch bearbeiten';
+  document.getElementById('new-tisch-name').value=t.name;
+  document.getElementById('new-tisch-kap').value=t.kapazitaet;
+  const sz=tischSizeM(t.kapazitaet);
+  document.getElementById('new-tisch-w').value=t.w||sz.w;
+  document.getElementById('new-tisch-h').value=t.h||sz.h;
+  document.getElementById('add-tisch-modal').style.display='flex';
+}
+function closeAddTischModal(){document.getElementById('add-tisch-modal').style.display='none';_editTischId=null;}
 function saveTisch(){
   const name=document.getElementById('new-tisch-name').value.trim();
   if(!name){alert('Bitte Tischnamen eingeben.');return;}
-  ST.sitzplan.tische.push({id:uid(),name,kapazitaet:parseInt(document.getElementById('new-tisch-kap').value)||10,raumX:null,raumY:null,raumRot:0});
+  const kapazitaet=parseInt(document.getElementById('new-tisch-kap').value)||10;
+  const def=tischSizeM(kapazitaet);
+  const w=Math.max(0.2,parseFloat(document.getElementById('new-tisch-w').value)||def.w);
+  const h=Math.max(0.2,parseFloat(document.getElementById('new-tisch-h').value)||def.h);
+  if(_editTischId){
+    const t=ST.sitzplan.tische.find(x=>x.id===_editTischId);
+    if(t){t.name=name;t.kapazitaet=kapazitaet;t.w=w;t.h=h;}
+  }else{
+    ST.sitzplan.tische.push({id:uid(),name,kapazitaet,w,h,raumX:null,raumY:null,raumRot:0});
+  }
   saveState();closeAddTischModal();renderSitzplan();
 }
 function deleteTisch(id){
@@ -1620,6 +1802,923 @@ function deleteElement(id){
   ST.sitzplan.elemente=ST.sitzplan.elemente.filter(x=>x.id!==id);
   _raumSelection=_raumSelection.filter(s=>!(s.kind==='element'&&s.id===id));
   saveState();renderRaumplan();
+}
+
+// ── Probetool: Sitzplan-Optimierung nach Bekanntheit ──────────
+// Reine Ansichts-/Experimentierfunktion: liest ST.sitzplan/ST.gaeste, schreibt aber
+// nur in ST.probetool/ST.zusammenhalten – der echte Sitzplan bleibt unangetastet.
+
+function pairKey(a,b){return a<b?a+'|'+b:b+'|'+a;}
+function setAffinitaet(a,b,stufe){
+  const k=pairKey(a,b);
+  if(!stufe)delete ST.probetool.affinitaet[k];
+  else ST.probetool.affinitaet[k]=stufe;
+}
+function getAffinitaet(a,b){return ST.probetool.affinitaet[pairKey(a,b)]||0;}
+
+function getBrautpaarTischNamen(){
+  return new Set(ST.gaeste.filter(g=>g.gruppe==='Brautpaar'&&g.tisch).map(g=>g.tisch));
+}
+function getProbetoolGuestPool(){
+  const bt=getBrautpaarTischNamen();
+  return ST.gaeste.filter(g=>g.status==='Zugesagt'&&g.gruppe!=='Brautpaar'&&!bt.has(g.tisch));
+}
+// Breiterer Kreis für Bewertungen/Gruppen (Feste Gruppen, Untergruppen, "Wer kennt wen"):
+// auch noch nicht zugesagte ("Eingeladen") Gäste können schon vorbereitet werden – nur die
+// eigentliche Sitzplatz-Berechnung (getProbetoolGuestPool) bleibt auf "Zugesagt" beschränkt.
+function getProbetoolRatingPool(){
+  return ST.gaeste.filter(g=>(g.status==='Zugesagt'||g.status==='Eingeladen')&&g.gruppe!=='Brautpaar');
+}
+
+function duplicateSitzplanForProbetool(){
+  if(ST.probetool.tische.length&&!confirm('Bestehende Probetool-Kopie überschreiben? Bisherige Berechnungsergebnisse gehen dabei verloren.'))return;
+  ST.probetool.tische=ST.sitzplan.tische
+    .filter(t=>!t.name.toLowerCase().includes('catering'))
+    .map(t=>({id:uid(),name:t.name,kapazitaet:t.kapazitaet,kapazitaetBasis:t.kapazitaet}));
+  // Aktuelle Sitzordnung der zugesagten Gäste als Startpunkt übernehmen (Algorithmus optimiert von dort aus weiter)
+  const startZuweisung={};
+  getProbetoolGuestPool().forEach(g=>{
+    const t=ST.probetool.tische.find(x=>x.name===g.tisch);
+    if(t)startZuweisung[g.id]=t.id;
+  });
+  ST.probetool.startZuweisung=startZuweisung;
+  ST.probetool.ergebnis=null;
+  saveState();renderProbetool();
+}
+
+// Familie/Freunde-Zuordnung direkt korrigierbar: alle automatischen Vorbelegungen (Kategorie 2/3/4)
+// hängen an g.gruppe – ist die falsch zugeteilt (z.B. jemand fälschlich als "Freunde" statt "Familie"
+// eingetragen), greifen die Bulk-Regeln komplett daneben. Schreibt direkt auf ST.gaeste, wirkt sich
+// also auch auf die restliche App (Gästeliste, Farben) aus – das ist beabsichtigt, es ist eine echte
+// Datenkorrektur, keine Probetool-lokale Ausnahme.
+function renderProbetoolZuordnung(){
+  const container=document.getElementById('probetool-zuordnung');if(!container)return;
+  const search=(document.getElementById('pt-zuordnung-search')?.value||'').toLowerCase();
+  const alle=ST.gaeste.filter(g=>g.status==='Zugesagt'||g.status==='Eingeladen');
+  const nochNichtZugesagt=alle.filter(g=>g.status==='Eingeladen').length;
+  const gaeste=alle.filter(g=>!search||g.name.toLowerCase().includes(search)).sort((a,b)=>a.name.localeCompare(b.name,'de'));
+  const hinweis=nochNichtZugesagt
+    ?`<div style="font-size:.78rem;color:var(--gold);margin-bottom:8px">⚠ ${nochNichtZugesagt} Gäste hier sind noch "Eingeladen" (nicht zugesagt) – die erscheinen zwar in den Bewertungen, aber NICHT im berechneten Ergebnis (Schritt 6), solange sie nicht auf "Zugesagt" stehen.</div>`
+    :'';
+  container.innerHTML=hinweis+gaeste.map(g=>{
+    const options=ALLE_GRUPPEN.map(gr=>`<option value="${e(gr)}" ${g.gruppe===gr?'selected':''}>${e(gr)}</option>`).join('');
+    const statusFarbe=g.status==='Zugesagt'?'#6ba36e':'var(--gold)';
+    return `<div class="guest-item">
+      <span class="grp-dot" style="background:${gc(g.gruppe)}"></span>
+      <span class="guest-name">${e(g.name)}</span>
+      <span class="badge" style="background:transparent;color:${statusFarbe};border:1px solid ${statusFarbe};font-size:.68rem" title="Status aus der Gästeliste">${e(g.status)}</span>
+      <select onchange="setGastGruppe('${g.id}',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:.85rem">${options}</select>
+      <input type="number" min="0" max="120" value="${g.alter||''}" placeholder="Alter" title="Alter (optional, für altersgerechte Tischnähe)"
+        onchange="setGastAlter('${g.id}',this.value)" style="width:56px;padding:5px 6px;border:1px solid var(--border);border-radius:6px;text-align:center;font-family:inherit;font-size:.85rem">
+    </div>`;
+  }).join('')||'<p style="font-size:.82rem;color:var(--text-l)">Keine Treffer.</p>';
+}
+function setGastAlter(gastId,val){
+  const g=ST.gaeste.find(x=>x.id===gastId);if(!g)return;
+  const n=parseInt(val);
+  g.alter=(n&&n>0)?n:null;
+  saveState();
+}
+function setGastGruppe(gastId,neueGruppe){
+  const g=ST.gaeste.find(x=>x.id===gastId);if(!g)return;
+  g.gruppe=neueGruppe;
+  saveState();
+  renderProbetoolZuordnung();
+}
+
+function renderProbetoolSetup(){
+  const container=document.getElementById('probetool-setup');if(!container)return;
+  const bt=getBrautpaarTischNamen();
+  const cateringAusgeschlossen=ST.sitzplan.tische.filter(t=>t.name.toLowerCase().includes('catering'));
+  const kap=ST.probetool.tische.reduce((s,t)=>s+t.kapazitaet,0);
+  const startCount=Object.keys(ST.probetool.startZuweisung||{}).length;
+  container.innerHTML=`<button class="btn btn-p btn-sm" onclick="duplicateSitzplanForProbetool()">Von aktuellem Sitzplan kopieren</button>
+    ${ST.probetool.tische.length?`<div style="margin-top:10px;font-size:.85rem;color:var(--text-l)">
+      ${ST.probetool.tische.length} Tische kopiert (${kap} Plätze).
+      ${bt.size?` Brautpaartisch (${[...bt].map(n=>e(n)).join(', ')}) ausgeschlossen.`:''}
+      ${cateringAusgeschlossen.length?` ${cateringAusgeschlossen.length} Cateringtisch(e) ausgeschlossen (${cateringAusgeschlossen.map(t=>e(t.name)).join(', ')}).`:''}
+      ${startCount?` ${startCount} zugesagte Gäste mit bestehender Sitzordnung als Startpunkt übernommen.`:''}
+    </div>`:'<div style="margin-top:10px;font-size:.85rem;color:var(--text-l)">Noch keine Kopie vorhanden.</div>'}`;
+}
+
+// ── Feste Gruppen (Paare/Familien, die immer zusammensitzen sollen) ──
+function renderProbetoolGruppen(){
+  const container=document.getElementById('probetool-gruppen');if(!container)return;
+  if(!ST.zusammenhalten.length){container.innerHTML='<p style="font-size:.82rem;color:var(--text-l)">Noch keine festen Gruppen angelegt.</p>';return;}
+  container.innerHTML=ST.zusammenhalten.map(z=>{
+    const namen=z.gastIds.map(id=>{const g=ST.gaeste.find(x=>x.id===id);return g?g.name:'?';});
+    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid #f0ebe4">
+      <span style="font-size:.9rem"><strong>${e(z.name)}</strong>: ${namen.map(n=>e(n)).join(', ')}</span>
+      <button class="btn btn-d btn-sm" onclick="deleteZusammenhalten('${z.id}')">✕</button>
+    </div>`;
+  }).join('');
+}
+function deleteZusammenhalten(id){
+  if(!confirm('Gruppe wirklich löschen?'))return;
+  ST.zusammenhalten=ST.zusammenhalten.filter(z=>z.id!==id);
+  saveState();renderProbetoolGruppen();
+}
+// Paare/Familien, die ursprünglich als "Name + Name"-Eintrag angelegt und seither in
+// Einzelpersonen aufgeteilt wurden, anhand der Namen aus der Vorlage (INITIAL_DATA) wiederfinden –
+// das ist die einzige Stelle, an der die ursprüngliche Gruppierung noch verzeichnet ist.
+function findeGruppenAusSitzplanVorlage(){
+  const vorschlaege=[];
+  const bestehende=new Set(ST.zusammenhalten.map(z=>z.gastIds.slice().sort().join(',')));
+  INITIAL_DATA.gaeste.forEach(g=>{
+    if(!g.personen||g.personen<=1)return;
+    let names=GAST_NAME_FIXES[g.name];
+    if(!names){
+      // Mind. 2 ECHTE Namen reichen (Sammelbegriffe wie "Kind" werden ignoriert) – hier geht es nur
+      // ums Verknüpfen bereits existierender Gäste, nicht ums exakte Aufteilen, daher kein strikter
+      // personen-Abgleich nötig (fixt z.B. "Robin + Claudette + Kind", personen:2 durch das Kind verzerrt).
+      const parts=ptEchteNamen(g.name);
+      if(parts.length>=2)names=parts;
+    }
+    if(!names)return;
+    const ids=names.map(n=>{const match=ST.gaeste.find(x=>x.name===n);return match?match.id:null;});
+    if(ids.some(id=>!id))return; // nicht (mehr) alle Namen in der aktuellen Gästeliste vorhanden
+    const key=ids.slice().sort().join(',');
+    if(bestehende.has(key))return; // schon als feste Gruppe vorhanden
+    bestehende.add(key);
+    vorschlaege.push({name:names.join(' & '),gastIds:ids});
+  });
+  return vorschlaege;
+}
+function uebernehmeGruppenAusSitzplan(){
+  const vorschlaege=findeGruppenAusSitzplanVorlage();
+  if(!vorschlaege.length){alert('Keine neuen Paare/Familien gefunden (oder bereits alle als feste Gruppe angelegt).');return;}
+  vorschlaege.forEach(v=>ST.zusammenhalten.push({id:uid(),name:v.name,gastIds:v.gastIds}));
+  saveState();renderProbetoolGruppen();
+  alert(`${vorschlaege.length} Gruppe(n) übernommen: ${vorschlaege.map(v=>v.name).join(', ')}`);
+}
+let _gruppeAuswahl=[];
+let _gruppeModalTarget='zusammenhalten';
+function openAddGruppeModal(target){
+  _gruppeModalTarget=target||'zusammenhalten';
+  _gruppeAuswahl=[];
+  document.getElementById('add-gruppe-modal-title').textContent=_gruppeModalTarget==='bekanntengruppen'?'Untergruppe hinzufügen':'Feste Gruppe hinzufügen';
+  document.getElementById('new-gruppe-name').value='';
+  document.getElementById('new-gruppe-search').value='';
+  renderGruppeAuswahlListe();
+  document.getElementById('add-gruppe-modal').style.display='flex';
+}
+function closeAddGruppeModal(){document.getElementById('add-gruppe-modal').style.display='none';}
+function renderGruppeAuswahlListe(){
+  const search=(document.getElementById('new-gruppe-search').value||'').toLowerCase();
+  const pool=getProbetoolRatingPool().filter(g=>!search||g.name.toLowerCase().includes(search));
+  const container=document.getElementById('new-gruppe-liste');if(!container)return;
+  container.innerHTML=pool.map(g=>{
+    const checked=_gruppeAuswahl.includes(g.id);
+    return `<label class="assign-guest-item" style="cursor:pointer">
+      <input type="checkbox" ${checked?'checked':''} onchange="toggleGruppeAuswahl('${g.id}',this.checked)" style="margin-right:8px">
+      <span class="assign-guest-color" style="background:${gc(g.gruppe)}"></span>
+      <span class="assign-guest-name">${e(g.name)}</span>
+      <span class="assign-guest-gruppe">${e(g.gruppe)}</span>
+    </label>`;
+  }).join('')||'<p style="font-size:.82rem;color:var(--text-l)">Keine Treffer.</p>';
+}
+function toggleGruppeAuswahl(id,checked){
+  if(checked){if(!_gruppeAuswahl.includes(id))_gruppeAuswahl.push(id);}
+  else{_gruppeAuswahl=_gruppeAuswahl.filter(x=>x!==id);}
+  const nameField=document.getElementById('new-gruppe-name');
+  if(!nameField.value.trim()){
+    const namen=_gruppeAuswahl.map(id=>{const g=ST.gaeste.find(x=>x.id===id);return g?g.name.split(' ')[0]:'';});
+    nameField.value=namen.join(' & ');
+  }
+}
+function saveGruppe(){
+  if(_gruppeAuswahl.length<2){alert('Bitte mindestens 2 Gäste auswählen.');return;}
+  const name=document.getElementById('new-gruppe-name').value.trim()||'Gruppe';
+  ST[_gruppeModalTarget].push({id:uid(),name,gastIds:[..._gruppeAuswahl]});
+  saveState();closeAddGruppeModal();
+  if(_gruppeModalTarget==='bekanntengruppen')renderProbetoolUntergruppen();else renderProbetoolGruppen();
+}
+function renderProbetoolUntergruppen(){
+  const container=document.getElementById('probetool-untergruppen');if(!container)return;
+  if(!ST.bekanntengruppen.length){container.innerHTML='<p style="font-size:.82rem;color:var(--text-l)">Noch keine Untergruppen angelegt.</p>';return;}
+  container.innerHTML=ST.bekanntengruppen.map(z=>{
+    const namen=z.gastIds.map(id=>{const g=ST.gaeste.find(x=>x.id===id);return g?g.name:'?';});
+    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid #f0ebe4">
+      <span style="font-size:.9rem"><strong>${e(z.name)}</strong>: ${namen.map(n=>e(n)).join(', ')}</span>
+      <button class="btn btn-d btn-sm" onclick="deleteUntergruppe('${z.id}')">✕</button>
+    </div>`;
+  }).join('');
+}
+function deleteUntergruppe(id){
+  if(!confirm('Untergruppe wirklich löschen?'))return;
+  ST.bekanntengruppen=ST.bekanntengruppen.filter(z=>z.id!==id);
+  saveState();renderProbetoolUntergruppen();
+}
+
+// ── Bekanntheits-Eingabe (4 Kategorien, pro Anker-Gast) ──
+let _ptAnkerId=null;
+function renderProbetoolAnkerList(){
+  const search=(document.getElementById('pt-anker-search').value||'').toLowerCase();
+  const container=document.getElementById('pt-anker-list');if(!container)return;
+  if(!search){container.innerHTML='';return;}
+  const matches=getProbetoolRatingPool().filter(g=>g.name.toLowerCase().includes(search)).slice(0,15);
+  container.innerHTML=matches.map(g=>`<div class="assign-guest-item" onclick="selectProbetoolAnker('${g.id}')" style="cursor:pointer">
+      <span class="assign-guest-color" style="background:${gc(g.gruppe)}"></span>
+      <span class="assign-guest-name">${e(g.name)}</span>
+      <span class="assign-guest-gruppe">${e(g.gruppe)}</span>
+    </div>`).join('')||'<p style="font-size:.82rem;color:var(--text-l)">Keine Treffer.</p>';
+}
+function selectProbetoolAnker(id){
+  _ptAnkerId=id;
+  document.getElementById('pt-anker-search').value='';
+  document.getElementById('pt-anker-list').innerHTML='';
+  renderProbetoolAffinitaetRows();
+}
+function renderProbetoolAffinitaetRows(){
+  const container=document.getElementById('pt-affinitaet-rows');if(!container)return;
+  if(!_ptAnkerId){container.innerHTML='';return;}
+  const anker=ST.gaeste.find(g=>g.id===_ptAnkerId);
+  if(!anker){container.innerHTML='';_ptAnkerId=null;return;}
+  const pool=getProbetoolRatingPool().filter(g=>g.id!==_ptAnkerId);
+  const gesetzt=pool.filter(g=>getAffinitaet(_ptAnkerId,g.id)>0).length;
+  container.innerHTML=`<div style="font-weight:700;margin-bottom:8px">Wie gut kennt <span style="color:var(--sage-d)">${e(anker.name)}</span> andere Gäste? <span id="pt-gesetzt-count" style="font-weight:400;color:var(--text-l);font-size:.82rem">(${gesetzt} Bewertungen gesetzt)</span></div>
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="pt-row-search" placeholder="Gast suchen …" oninput="renderProbetoolAffinitaetList()">
+    </div>
+    <div id="pt-affinitaet-list" style="max-height:340px;overflow-y:auto"></div>`;
+  renderProbetoolAffinitaetList();
+}
+function renderProbetoolAffinitaetList(){
+  if(!_ptAnkerId)return;
+  const search=(document.getElementById('pt-row-search')?.value||'').toLowerCase();
+  const pool=getProbetoolRatingPool().filter(g=>g.id!==_ptAnkerId&&(!search||g.name.toLowerCase().includes(search)));
+  const container=document.getElementById('pt-affinitaet-list');if(!container)return;
+  container.innerHTML=pool.map(g=>{
+    const val=getAffinitaet(_ptAnkerId,g.id);
+    const buttons=[1,2,3,4].map(k=>{
+      const kat=PT_KATEGORIEN[k];
+      const active=val===k;
+      return `<button onclick="setProbetoolAffinitaet('${g.id}',${k})" title="${e(kat.label)}"
+        style="border:1px solid ${active?'var(--sage)':'var(--border)'};background:${active?'var(--sage)':'var(--white)'};color:${active?'#fff':'var(--text)'};border-radius:6px;padding:4px 7px;cursor:pointer;font-size:.85rem;line-height:1">${kat.icon}</button>`;
+    }).join('');
+    return `<div class="guest-item">
+      <span class="grp-dot" style="background:${gc(g.gruppe)}"></span>
+      <span class="guest-name">${e(g.name)}</span>
+      <div style="display:flex;gap:4px">${buttons}</div>
+    </div>`;
+  }).join('')||'<p style="font-size:.82rem;color:var(--text-l)">Keine Treffer.</p>';
+}
+function setProbetoolAffinitaet(otherId,kategorie){
+  const current=getAffinitaet(_ptAnkerId,otherId);
+  setAffinitaet(_ptAnkerId,otherId,current===kategorie?0:kategorie); // erneuter Klick auf aktive Kategorie löscht sie
+  saveState();
+  renderProbetoolAffinitaetList();
+  const pool=getProbetoolRatingPool().filter(g=>g.id!==_ptAnkerId);
+  const gesetzt=pool.filter(g=>getAffinitaet(_ptAnkerId,g.id)>0).length;
+  const el=document.getElementById('pt-gesetzt-count');if(el)el.textContent=`(${gesetzt} Bewertungen gesetzt)`;
+}
+// Kategorie 2 ("kennen sich gut") automatisch für alle Paare innerhalb der Familien-Gruppen
+// und der benutzerdefinierten Untergruppen vorbelegen – überschreibt nie bereits gesetzte Bewertungen.
+function wendeKategorie2Vorbelegung(){
+  const cluster=[];
+  ['Familie Paulina','Familie Jan'].forEach(gr=>{
+    const ids=getProbetoolRatingPool().filter(g=>g.gruppe===gr).map(g=>g.id);
+    if(ids.length>=2)cluster.push(ids);
+  });
+  ST.bekanntengruppen.forEach(z=>cluster.push(z.gastIds));
+  let gesetzt=0;
+  cluster.forEach(ids=>{
+    for(let i=0;i<ids.length;i++){
+      for(let j=i+1;j<ids.length;j++){
+        if(!getAffinitaet(ids[i],ids[j])){
+          setAffinitaet(ids[i],ids[j],2);
+          gesetzt++;
+        }
+      }
+    }
+  });
+  saveState();
+  renderProbetoolAffinitaetRows();
+  alert(gesetzt?`${gesetzt} neue Bewertungen (Kategorie 2) gesetzt.`:'Keine neuen Paare gefunden (alle bereits bewertet, oder Gruppen zu klein/leer).');
+}
+const PT_FAMILIE_GRUPPEN=['Familie Paulina','Familie Jan'];
+const PT_FREUNDE_GRUPPEN=['Freunde Paulina','Freunde Jan','Gemeinsame Freunde'];
+// Familie ↔ Freunde standardmäßig "passen wahrscheinlich nicht zusammen" (Kategorie 4) – nie überschreiben,
+// Ausnahmen macht der Nutzer, indem er einzelne Paare vor/danach manuell auf eine andere Kategorie setzt.
+function wendeKategorie4FamilieFreunde(){
+  const pool=getProbetoolRatingPool();
+  const familie=pool.filter(g=>PT_FAMILIE_GRUPPEN.includes(g.gruppe));
+  const freunde=pool.filter(g=>PT_FREUNDE_GRUPPEN.includes(g.gruppe));
+  let gesetzt=0;
+  familie.forEach(f=>{
+    freunde.forEach(fr=>{
+      if(!getAffinitaet(f.id,fr.id)){setAffinitaet(f.id,fr.id,4);gesetzt++;}
+    });
+  });
+  saveState();
+  renderProbetoolAffinitaetRows();
+  alert(gesetzt?`${gesetzt} neue Bewertungen (Kategorie 4, Familie ↔ Freunde) gesetzt.`:'Keine neuen Paare gefunden (alle bereits bewertet, oder keine Familie/Freunde-Gäste vorhanden).');
+}
+// Freunde untereinander (über alle Freunde-Gruppen hinweg) standardmäßig "könnten harmonieren" (Kategorie 3) – ein Klick für alle Paare auf einmal.
+function wendeKategorie3UnterFreunden(){
+  const ids=getProbetoolRatingPool().filter(g=>PT_FREUNDE_GRUPPEN.includes(g.gruppe)).map(g=>g.id);
+  let gesetzt=0;
+  for(let i=0;i<ids.length;i++){
+    for(let j=i+1;j<ids.length;j++){
+      if(!getAffinitaet(ids[i],ids[j])){setAffinitaet(ids[i],ids[j],3);gesetzt++;}
+    }
+  }
+  saveState();
+  renderProbetoolAffinitaetRows();
+  alert(gesetzt?`${gesetzt} neue Bewertungen (Kategorie 3, unter Freunden) gesetzt.`:'Keine neuen Paare gefunden (alle bereits bewertet, oder zu wenige Freunde-Gäste vorhanden).');
+}
+
+// ── Optimierungs-Algorithmus ──
+const PT_HARD_GROUP_WEIGHT=1000; // "feste Gruppe" bzw. Kategorie 1 dominiert alle anderen Kategorien
+const PT_KATEGORIEN={
+  1:{label:'Müssen zusammensitzen',icon:'🔒',gewicht:PT_HARD_GROUP_WEIGHT},
+  2:{label:'Kennen sich gut',icon:'😊',gewicht:3},
+  3:{label:'Könnten harmonieren',icon:'🙂',gewicht:1},
+  4:{label:'Passen nicht zusammen',icon:'❌',gewicht:-2}
+};
+function ptGroupOf(gastId){return ST.zusammenhalten.find(z=>z.gastIds.includes(gastId))||null;}
+// Automatischer Kategorie-Fallback anhand der AKTUELLEN g.gruppe-Zuordnung – greift nur, wenn
+// für dieses Paar noch keine explizite Bewertung existiert. Dadurch übernimmt die Berechnung
+// immer live die gerade gültige Familie/Freunde-Zuteilung, statt von einem separaten, potenziell
+// veralteten "Vorbelegung"-Klick abzuhängen (der bei einer späteren Korrektur der Zuordnung sonst
+// nicht automatisch nachgezogen wird).
+function ptGruppenDefaultKategorie(idA,idB){
+  const a=ST.gaeste.find(g=>g.id===idA),b=ST.gaeste.find(g=>g.id===idB);
+  if(!a||!b)return 0;
+  // Exakt gleiche, enge Gruppe (z.B. beide "Freunde Paulina", oder beide "Familie Jan") -> kennen sich
+  // gut. "Gemeinsame Freunde" zählt bewusst NICHT als "enge" Gruppe (oft groß/durchmischt, nicht
+  // automatisch alle eng bekannt), bleibt bei der schwächeren Freunde-untereinander-Regel unten.
+  if(a.gruppe===b.gruppe&&a.gruppe!=='Gemeinsame Freunde')return 2;
+  const aFam=PT_FAMILIE_GRUPPEN.includes(a.gruppe),bFam=PT_FAMILIE_GRUPPEN.includes(b.gruppe);
+  const aFreund=PT_FREUNDE_GRUPPEN.includes(a.gruppe),bFreund=PT_FREUNDE_GRUPPEN.includes(b.gruppe);
+  if((aFam&&bFreund)||(aFreund&&bFam))return 4; // Familie ↔ Freunde
+  if(aFam&&bFam)return 3; // unterschiedliche Familien (Paulina vs Jan) -> könnten harmonieren
+  if(aFreund&&bFreund)return 3; // unterschiedliche/gemeinsame Freunde-Gruppen -> könnten harmonieren
+  return 0;
+}
+// Zusätzlicher, kleiner Alters-Nudge (nicht Kategorie-ersetzend, nur ein Tie-Breaker): ähnliches
+// Alter = kleiner Bonus, große Alterslücke = kleiner Malus. Ohne Altersangabe kein Effekt.
+// Verhindert z.B., dass ein älteres Ehepaar rein nach Kapazität an einen "jungen" Tisch gerät.
+function ptAltersBonus(idA,idB){
+  const a=ST.gaeste.find(g=>g.id===idA),b=ST.gaeste.find(g=>g.id===idB);
+  if(!a||!b||!a.alter||!b.alter)return 0;
+  const diff=Math.abs(a.alter-b.alter);
+  if(diff<=10)return 0.5;
+  if(diff>=25)return -0.5;
+  return 0;
+}
+function ptEdgeWeight(idA,idB){
+  const ga=ptGroupOf(idA),gb=ptGroupOf(idB);
+  if(ga&&gb&&ga.id===gb.id)return PT_HARD_GROUP_WEIGHT;
+  const kat=getAffinitaet(idA,idB)||ptGruppenDefaultKategorie(idA,idB);
+  const basis=kat?PT_KATEGORIEN[kat].gewicht:0;
+  return basis+ptAltersBonus(idA,idB);
+}
+// Liefert die tatsächlich zutreffende Kategorie (1 oder 2) für die "bekannt"-Anzeige im Ergebnis,
+// oder null, wenn sich die beiden nicht bekannt sind. Feste Gruppe (zusammenhalten) zählt wie Kategorie 1.
+// Kategorie 3 ("kennen sich nicht, würden aber harmonieren") ist nur ein schwacher Score-Bonus, keine Bekanntschaft.
+function ptBekanntKategorie(idA,idB){
+  const ga=ptGroupOf(idA),gb=ptGroupOf(idB);
+  if(ga&&gb&&ga.id===gb.id)return 1;
+  const kat=getAffinitaet(idA,idB)||ptGruppenDefaultKategorie(idA,idB);
+  return[1,2].includes(kat)?kat:null;
+}
+function ptIstBekannt(idA,idB){return ptBekanntKategorie(idA,idB)!=null;}
+// Verschmilzt "Feste Gruppen" (zusammenhalten) UND einzeln als Kategorie 1 bewertete Paare
+// (auch transitiv, z.B. A-B=1 und B-C=1 → A,B,C ein Cluster) zu "muss zusammensitzen"-Clustern.
+// Wird sowohl von der Greedy-Konstruktion (Blockplatzierung) als auch der lokalen Suche
+// (Sperre gegen Verschieben) genutzt, damit beide Phasen exakt dieselbe Definition verwenden –
+// vorher betrachtete nur die lokale Suche Kategorie-1-Paare, die Konstruktion nicht, wodurch
+// solche Paare an getrennten Tischen landen und danach nie mehr korrigiert werden konnten.
+function ptHarteCluster(pool){
+  const ids=pool.map(g=>g.id);
+  const parent=new Map(ids.map(id=>[id,id]));
+  function find(x){while(parent.get(x)!==x)x=parent.get(x);return x;}
+  function union(a,b){const ra=find(a),rb=find(b);if(ra!==rb)parent.set(ra,rb);}
+  ST.zusammenhalten.forEach(z=>{
+    const members=z.gastIds.filter(id=>parent.has(id));
+    for(let i=1;i<members.length;i++)union(members[0],members[i]);
+  });
+  for(let i=0;i<ids.length;i++){
+    for(let j=i+1;j<ids.length;j++){
+      if(getAffinitaet(ids[i],ids[j])===1)union(ids[i],ids[j]);
+    }
+  }
+  const clusters=new Map();
+  ids.forEach(id=>{
+    const root=find(id);
+    if(!clusters.has(root))clusters.set(root,[]);
+    clusters.get(root).push(id);
+  });
+  return[...clusters.values()].filter(c=>c.length>1);
+}
+function ptGuestSize(g){return g.personen||1;}
+function ptLoad(tischId,assignment,pool){
+  return pool.filter(g=>assignment[g.id]===tischId).reduce((s,g)=>s+ptGuestSize(g),0);
+}
+// Große, kumulative Bonuspunkte fürs Erreichen von "1. bekannte Person" und "2. bekannte Person" –
+// macht "mind. 2 kennen" zur mit Abstand höchsten Priorität; alles danach (mehr Bekannte, enge
+// Cluster zusammenhalten) ist nur noch ein kleiner Zusatzbonus über die normalen Kategorie-Gewichte.
+const PT_SCHWELLE_1=100, PT_SCHWELLE_2=80;
+function ptScoreAssignment(assignment,poolIds){
+  const byTable={};
+  poolIds.forEach(id=>{(byTable[assignment[id]]||=[]).push(id);});
+  let total=0;
+  Object.values(byTable).forEach(members=>{
+    members.forEach(idA=>{
+      let known=0,bekanntCount=0;
+      members.forEach(idB=>{
+        if(idA===idB)return;
+        const w=ptEdgeWeight(idA,idB);
+        if(w>=PT_HARD_GROUP_WEIGHT){total+=PT_HARD_GROUP_WEIGHT;bekanntCount++;}
+        else{
+          known+=w;
+          if(ptIstBekannt(idA,idB))bekanntCount++;
+        }
+      });
+      total+=Math.max(-10,known); // kein Deckel nach oben mehr: enge Cluster (z.B. Familien) sollen zusammenbleiben statt für "Verteilung" auseinandergerissen zu werden; Deckel nach unten verhindert, dass einzelne "passt nicht"-Paare alles dominieren
+      if(bekanntCount>=1)total+=PT_SCHWELLE_1;
+      if(bekanntCount>=2)total+=PT_SCHWELLE_2;
+    });
+  });
+  return total;
+}
+function ptGreedyConstruct(pool,tables,startAssignment){
+  const validTableIds=new Set(tables.map(t=>t.id));
+  const assignment={};
+  // Bestehende Sitzordnung als Startpunkt übernehmen, sofern der Tisch noch existiert (z.B. nicht als Catering-Tisch ausgeschlossen)
+  if(startAssignment){
+    Object.keys(startAssignment).forEach(id=>{
+      if(validTableIds.has(startAssignment[id]))assignment[id]=startAssignment[id];
+    });
+  }
+  const capacities={};
+  tables.forEach(t=>capacities[t.id]=t.kapazitaet);
+  const remaining=new Set(pool.map(g=>g.id).filter(id=>!(id in assignment)));
+  const byId=new Map(pool.map(g=>[g.id,g]));
+  const erweiterungen=[]; // {tisch,von,auf} – Protokoll für die Anzeige, wenn ein Tisch vergrößert wurde
+  function currentLoad(tischId){
+    return Object.keys(assignment).filter(id=>assignment[id]===tischId).reduce((s,id)=>s+ptGuestSize(byId.get(id)),0);
+  }
+  // Sucht (oder erweitert) einen Tisch für einen Block; falls forcedTable gesetzt ist (weil ein Teil
+  // der Gruppe schon dort sitzt, z.B. aus der übernommenen Sitzordnung), wird AUSSCHLIESSLICH dieser
+  // Tisch genutzt/erweitert statt neu zu suchen – die Gruppe darf nie auseinandergerissen werden.
+  function placeBlock(ids,size,forcedTable){
+    let best=forcedTable||null;
+    if(!best){
+      let bestRest=-1;
+      tables.forEach(t=>{
+        const rest=capacities[t.id]-currentLoad(t.id);
+        if(rest>=size&&rest>bestRest){best=t;bestRest=rest;}
+      });
+    }
+    if(!best){
+      // Kein Tisch hat genug freie Plätze: lieber den am besten passenden Tisch um bis zu 2 Plätze
+      // vergrößern (Zehner- → Zwölfertisch), als eine feste Gruppe/Paare zu trennen.
+      let bestErw=null,minZusatz=Infinity;
+      tables.forEach(t=>{
+        const basis=t.kapazitaetBasis||t.kapazitaet;
+        const frei=(basis+2)-currentLoad(t.id);
+        if(frei>=size){
+          const zusatz=Math.max(0,size-(capacities[t.id]-currentLoad(t.id)));
+          if(zusatz<minZusatz){minZusatz=zusatz;bestErw=t;}
+        }
+      });
+      best=bestErw;
+    }
+    if(!best){
+      // Passt auch mit +2 Plätzen nirgends: größten verfügbaren Tisch nehmen (Überlauf unvermeidbar)
+      let bestRest=-1;
+      tables.forEach(t=>{
+        const rest=capacities[t.id]-currentLoad(t.id);
+        if(!best||rest>bestRest){best=t;bestRest=rest;}
+      });
+    }
+    // Falls der gewählte/forcierte Tisch nicht reicht: erweitern (auch über Basis+2 hinaus, wenn nötig –
+    // ein Überlauf am richtigen Tisch ist immer noch besser als die Gruppe zu trennen).
+    const rest=capacities[best.id]-currentLoad(best.id);
+    if(rest<size){
+      const noetig=currentLoad(best.id)+size;
+      erweiterungen.push({tisch:best.name,von:capacities[best.id],auf:noetig});
+      best.kapazitaet=noetig; // direkte Mutation – persistiert in ST.probetool.tische
+      capacities[best.id]=noetig;
+    }
+    ids.forEach(id=>{assignment[id]=best.id;remaining.delete(id);});
+  }
+  ptHarteCluster(pool).forEach(alle=>{
+    const mitglieder=alle.filter(id=>remaining.has(id));
+    if(!mitglieder.length)return;
+    const size=mitglieder.reduce((s,id)=>s+ptGuestSize(byId.get(id)),0);
+    const bereitsTischId=alle.map(id=>assignment[id]).find(t=>t!=null);
+    const forcedTable=bereitsTischId?tables.find(t=>t.id===bereitsTischId):null;
+    placeBlock(mitglieder,size,forcedTable);
+  });
+  const grad=id=>pool.reduce((s,o)=>o.id===id?s:s+ptEdgeWeight(id,o.id),0);
+  const rest=[...remaining].sort((a,b)=>grad(b)-grad(a));
+  rest.forEach(id=>{
+    const g=byId.get(id);
+    let best=null,bestScore=-Infinity,bestRest=-1;
+    tables.forEach(t=>{
+      const load=currentLoad(t.id);
+      if(load+ptGuestSize(g)>capacities[t.id])return;
+      const mitglieder=Object.keys(assignment).filter(x=>assignment[x]===t.id);
+      const score=mitglieder.reduce((s,x)=>s+ptEdgeWeight(id,x),0);
+      const restKap=capacities[t.id]-load;
+      if(score>bestScore||(score===bestScore&&restKap>bestRest)){best=t;bestScore=score;bestRest=restKap;}
+    });
+    if(!best){
+      tables.forEach(t=>{const restKap=capacities[t.id]-currentLoad(t.id);if(!best||restKap>bestRest){best=t;bestRest=restKap;}});
+    }
+    assignment[id]=best.id;remaining.delete(id);
+  });
+  return{assignment,erweiterungen};
+}
+// Mitglieder fester Gruppen (via zusammenhalten ODER paarweiser Kategorie 1, via ptHarteCluster –
+// dieselbe Definition wie in der Greedy-Konstruktion) dürfen von der lokalen Suche NIE bewegt
+// werden – ihre Platzierung aus der Konstruktion bleibt endgültig. Das garantiert "auf keinen
+// Fall trennen" strukturell statt nur über eine hohe Gewichtung.
+function ptLocalSearch(assignment,pool,tables,iterations){
+  const capacities={};
+  tables.forEach(t=>capacities[t.id]=t.kapazitaet);
+  const ids=pool.map(g=>g.id);
+  const byId=new Map(pool.map(g=>[g.id,g]));
+  const gesperrt=new Set(ptHarteCluster(pool).flat());
+  const bewegliche=ids.filter(id=>!gesperrt.has(id));
+  if(!bewegliche.length)return assignment;
+  let best=ptScoreAssignment(assignment,ids);
+  for(let i=0;i<iterations;i++){
+    if(Math.random()<0.5){
+      const gid=bewegliche[Math.random()*bewegliche.length|0];
+      const g=byId.get(gid);
+      const toTisch=tables[Math.random()*tables.length|0].id;
+      const fromTisch=assignment[gid];
+      if(toTisch===fromTisch)continue;
+      const loadTo=ptLoad(toTisch,assignment,pool);
+      if(loadTo+ptGuestSize(g)>capacities[toTisch])continue;
+      const prev=assignment[gid];
+      assignment[gid]=toTisch;
+      const score=ptScoreAssignment(assignment,ids);
+      if(score>=best)best=score;else assignment[gid]=prev;
+    }else{
+      const gidA=bewegliche[Math.random()*bewegliche.length|0];
+      const gidB=bewegliche[Math.random()*bewegliche.length|0];
+      if(gidA===gidB||assignment[gidA]===assignment[gidB])continue;
+      const gA=byId.get(gidA),gB=byId.get(gidB);
+      const tA=assignment[gidA],tB=assignment[gidB];
+      const loadA=ptLoad(tA,assignment,pool),loadB=ptLoad(tB,assignment,pool);
+      const sizeA=ptGuestSize(gA),sizeB=ptGuestSize(gB);
+      if(loadA-sizeA+sizeB>capacities[tA])continue;
+      if(loadB-sizeB+sizeA>capacities[tB])continue;
+      assignment[gidA]=tB;assignment[gidB]=tA;
+      const score=ptScoreAssignment(assignment,ids);
+      if(score>=best)best=score;else{assignment[gidA]=tA;assignment[gidB]=tB;}
+    }
+  }
+  return assignment;
+}
+// Score/Warnungen/Split-Erkennung aus einer Zuweisung neu ableiten – wird sowohl nach
+// einer frischen Berechnung als auch nach jeder manuellen Verschiebung im Ergebnis aufgerufen.
+function ptBerechneMeta(assignment,pool){
+  const warnungen=[];
+  pool.forEach(g=>{
+    const mitglieder=pool.filter(o=>o.id!==g.id&&assignment[o.id]===assignment[g.id]);
+    const bekannt=mitglieder.some(o=>ptIstBekannt(g.id,o.id));
+    if(!bekannt)warnungen.push(g.id);
+  });
+  const splitGroups=ST.zusammenhalten.filter(z=>{
+    const used=new Set(z.gastIds.filter(id=>assignment[id]!=null).map(id=>assignment[id]));
+    return used.size>1;
+  });
+  return{score:ptScoreAssignment(assignment,pool.map(g=>g.id)),warnungen,splitGroups:splitGroups.map(z=>z.id)};
+}
+function computeProbetoolErgebnis(){
+  const pool=getProbetoolGuestPool();
+  const bt=getBrautpaarTischNamen();
+  const tables=ST.probetool.tische.filter(t=>!bt.has(t.name));
+  if(!tables.length){alert('Bitte zuerst den Sitzplan kopieren (Schritt 1).');return;}
+  if(!pool.length){alert('Keine zugesagten Gäste außerhalb des Brautpaartischs gefunden.');return;}
+  const{assignment:startAssignment,erweiterungen}=ptGreedyConstruct(pool,tables,ST.probetool.startZuweisung);
+  const assignment=ptLocalSearch(startAssignment,pool,tables,4000);
+  ST.probetool.ergebnis={zuweisung:assignment,seatIdx:{},...ptBerechneMeta(assignment,pool),erweiterungen,berechnetAm:new Date().toISOString()};
+  _ptSelGast=null;_ptExpanded=new Set();_ptDrag=null;
+  saveState();
+  renderProbetoolErgebnis();
+}
+// ── Manuelles Verschieben/Anpassen im berechneten Ergebnis ──
+// Sitzplatzgenaue Bearbeitung, analog zu guestAtSeat/nextFreeSlot/moveSeat des echten Sitzplans
+// (Zeile ~1134-1193), aber komplett auf ST.probetool.ergebnis.seatIdx gespeichert – der echte
+// Sitzplan (ST.gaeste) bleibt dabei unangetastet. Mehrpersonen-Gäste werden hier bewusst NICHT
+// wie im echten Sitzplan einzeln aufsplittbar gemacht (kein splitGuest-Äquivalent), sondern
+// bewegen sich als ein Block – das genügt fürs Experimentieren und vermeidet, echte Gästedaten
+// (ST.gaeste) durch das Probetool zu verändern.
+let _ptSelGast=null;
+let _ptExpanded=new Set();
+let _ptDrag=null;
+function ptGuestAtSeat(tischId,slotIdx,pool,erg){
+  pool=pool||getProbetoolGuestPool();erg=erg||ST.probetool.ergebnis;if(!erg)return null;
+  return pool.find(g=>erg.zuweisung[g.id]===tischId&&erg.seatIdx[g.id]!=null&&slotIdx>=erg.seatIdx[g.id]&&slotIdx<erg.seatIdx[g.id]+ptGuestSize(g))||null;
+}
+function ptNextFreeSlot(tischId,count,kapazitaet,pool,erg){
+  outer:for(let s=0;s<=kapazitaet-count;s++){
+    for(let i=0;i<count;i++){if(ptGuestAtSeat(tischId,s+i,pool,erg))continue outer;}
+    return s;
+  }
+  outer2:for(let s=kapazitaet;s<kapazitaet+200;s++){
+    for(let i=0;i<count;i++){if(ptGuestAtSeat(tischId,s+i,pool,erg))continue outer2;}
+    return s;
+  }
+  return kapazitaet;
+}
+// Vergibt fehlende seatIdx (z.B. nach frischer Berechnung oder für ältere gespeicherte Ergebnisse
+// ohne seatIdx) – selbstheilend, damit die Sitzplatz-Ansicht immer stabile, klickbare Plätze hat.
+function ptEnsureSeatIdx(){
+  const erg=ST.probetool.ergebnis;if(!erg)return;
+  if(!erg.seatIdx)erg.seatIdx={};
+  const pool=getProbetoolGuestPool();
+  const kap={};ST.probetool.tische.forEach(t=>kap[t.id]=t.kapazitaet);
+  pool.forEach(g=>{
+    const tischId=erg.zuweisung[g.id];
+    if(tischId==null)return;
+    if(erg.seatIdx[g.id]==null)erg.seatIdx[g.id]=ptNextFreeSlot(tischId,ptGuestSize(g),kap[tischId]||0,pool,erg);
+  });
+}
+// Kern-Operation: Person(-engruppe) bewegen/tauschen – 1:1 dieselbe Logik wie moveSeat() für den
+// echten Sitzplan, nur auf erg.zuweisung/erg.seatIdx statt g.tisch/g.seatIdx angewandt.
+function ptMoveSeat(gastId,tgtTisch,tgtSlotIdx){
+  const erg=ST.probetool.ergebnis;if(!erg)return;
+  if(!erg.seatIdx)erg.seatIdx={};
+  const pool=getProbetoolGuestPool();
+  const src=pool.find(g=>g.id===gastId);if(!src)return;
+  const displaced=ptGuestAtSeat(tgtTisch,tgtSlotIdx,pool,erg);
+  if(displaced&&displaced.id===gastId)return;
+  const srcHadSeat=erg.zuweisung[gastId]!=null;
+  const srcTisch=erg.zuweisung[gastId],srcSlot=erg.seatIdx[gastId];
+  erg.zuweisung[gastId]=tgtTisch;erg.seatIdx[gastId]=tgtSlotIdx;
+  if(displaced){
+    if(srcHadSeat){erg.zuweisung[displaced.id]=srcTisch;erg.seatIdx[displaced.id]=srcSlot;}
+    else{delete erg.zuweisung[displaced.id];delete erg.seatIdx[displaced.id];}
+  }
+  Object.assign(erg,ptBerechneMeta(erg.zuweisung,pool));
+  saveState();
+  renderProbetoolErgebnis();
+}
+function ptOnSeatDragStart(ev,gastId){_ptDrag={gastId};ev.dataTransfer.effectAllowed='move';ev.currentTarget.style.opacity='.4';}
+function ptOnSeatDragEnd(ev){ev.currentTarget.style.opacity='';_ptDrag=null;}
+function ptOnUnassignedDragStart(ev,gastId){_ptDrag={gastId};ev.dataTransfer.effectAllowed='move';}
+function ptOnSeatDrop(ev,tischId,slotIdx){
+  ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.remove('drag-over');
+  if(!_ptDrag)return;
+  const id=_ptDrag.gastId;_ptDrag=null;
+  ptMoveSeat(id,tischId,slotIdx);
+}
+function ptOnSeatClick(ev,gastId,tischId,slotIdx){
+  ev.stopPropagation();
+  if(_ptSelGast===null){_ptSelGast=gastId;renderProbetoolErgebnis();}
+  else if(_ptSelGast===gastId){_ptSelGast=null;renderProbetoolErgebnis();}
+  else{const id=_ptSelGast;_ptSelGast=null;ptMoveSeat(id,tischId,slotIdx);}
+}
+function ptOnEmptySeatClick(ev,tischId,slotIdx){
+  ev.stopPropagation();
+  if(!_ptSelGast)return;
+  const id=_ptSelGast;_ptSelGast=null;ptMoveSeat(id,tischId,slotIdx);
+}
+function ptOnUnassignedClick(gastId){
+  _ptSelGast=(_ptSelGast===gastId)?null:gastId;
+  renderProbetoolErgebnis();
+}
+function ptRemoveFromTisch(gastId){
+  const erg=ST.probetool.ergebnis;if(!erg)return;
+  delete erg.zuweisung[gastId];
+  if(erg.seatIdx)delete erg.seatIdx[gastId];
+  Object.assign(erg,ptBerechneMeta(erg.zuweisung,getProbetoolGuestPool()));
+  saveState();
+  renderProbetoolErgebnis();
+}
+function onProbetoolGuestClick(gastId,tischId){
+  if(_ptSelGast&&_ptSelGast!==gastId){onProbetoolTischClick(tischId);return;}
+  _ptSelGast=(_ptSelGast===gastId)?null:gastId;
+  renderProbetoolErgebnis();
+}
+// Verschiebt via Klick auf die Tisch-Karte/-Zeile (Tisch-Ebene, aus der Liste unterhalb der
+// Sitzplatz-Grafik) – vergibt dabei ebenfalls einen freien Sitzplatz, damit Grafik und Liste
+// immer dieselbe, konsistente Zuordnung zeigen.
+function onProbetoolTischClick(tischId){
+  if(!_ptSelGast)return;
+  const erg=ST.probetool.ergebnis;if(!erg)return;
+  if(!erg.seatIdx)erg.seatIdx={};
+  const pool=getProbetoolGuestPool();
+  const g=pool.find(x=>x.id===_ptSelGast);if(!g)return;
+  const t=ST.probetool.tische.find(x=>x.id===tischId);
+  erg.zuweisung[_ptSelGast]=tischId;
+  erg.seatIdx[_ptSelGast]=ptNextFreeSlot(tischId,ptGuestSize(g),t?t.kapazitaet:0,pool,erg);
+  Object.assign(erg,ptBerechneMeta(erg.zuweisung,pool));
+  _ptSelGast=null;
+  saveState();
+  renderProbetoolErgebnis();
+}
+function adjustProbetoolTischKapazitaet(tischId,delta){
+  const t=ST.probetool.tische.find(x=>x.id===tischId);if(!t)return;
+  t.kapazitaet=Math.max(1,t.kapazitaet+delta);
+  saveState();
+  renderProbetoolErgebnis();
+}
+function toggleProbetoolBekanntDetails(gastId){
+  if(_ptExpanded.has(gastId))_ptExpanded.delete(gastId);else _ptExpanded.add(gastId);
+  renderProbetoolErgebnis();
+}
+function renderProbetoolErgebnis(){
+  const card=document.getElementById('probetool-ergebnis-card');
+  const container=document.getElementById('probetool-ergebnis');
+  if(!card||!container)return;
+  const erg=ST.probetool.ergebnis;
+  if(!erg){card.style.display='none';return;}
+  card.style.display='block';
+  const pool=getProbetoolGuestPool();
+  const selGuest=_ptSelGast?ST.gaeste.find(g=>g.id===_ptSelGast):null;
+  let html=`<div style="font-size:.85rem;color:var(--text-l);margin-bottom:4px">Score: <strong>${erg.score}</strong> · ${erg.warnungen.length?`<span style="color:var(--rose-d)">${erg.warnungen.length} Gäste ohne bekannte Tischnachbarn</span>`:'Alle Gäste haben mindestens 1 bekannte Person am Tisch 🎉'}</div>`;
+  if(erg.warnungen.length){
+    const namen=erg.warnungen.map(id=>pool.find(g=>g.id===id)).filter(Boolean).map(g=>e(g.name));
+    html+=`<div style="margin-bottom:8px;padding:8px 10px;background:#fde8e8;border-radius:8px;font-size:.82rem;color:var(--rose-d)">${namen.join(', ')}</div>`;
+  }
+  html+=`<div style="font-size:.78rem;color:var(--text-l);margin-bottom:12px">${selGuest?`<strong style="color:var(--sage-d)">${e(selGuest.name)}</strong> ausgewählt – auf einen Tisch (oder Gast dort) klicken, um zu verschieben. Nochmal anklicken zum Abwählen.`:'Gast anklicken zum Auswählen, dann Ziel-Tisch anklicken zum Verschieben. "X bekannt" anklicken zeigt die Namen.'}</div>`;
+  if(erg.erweiterungen&&erg.erweiterungen.length){
+    html+=`<div style="margin-bottom:12px;padding:8px 10px;background:#fff8e1;border-radius:8px;font-size:.82rem;color:var(--gold)">📐 ${erg.erweiterungen.map(x=>`${e(x.tisch)}: ${x.von} → ${x.auf} Plätze`).join(', ')} erweitert, damit Paare/Familien nicht getrennt werden mussten.</div>`;
+  }
+  if(erg.splitGroups.length){
+    const namen=erg.splitGroups.map(id=>{const z=ST.zusammenhalten.find(x=>x.id===id);return z?z.name:'?';});
+    html+=`<div style="margin-bottom:12px;padding:8px 10px;background:#fde8e8;border-radius:8px;font-size:.82rem;color:var(--rose-d)">⚠ Diese festen Gruppen konnten nicht komplett an einem Tisch untergebracht werden: ${namen.map(n=>e(n)).join(', ')}</div>`;
+  }
+  ST.probetool.tische.forEach(t=>{
+    const members=pool.filter(g=>erg.zuweisung[g.id]===t.id);
+    const over=members.length>t.kapazitaet;
+    html+=`<div style="margin-bottom:12px;border:1px solid ${over?'var(--rose)':'var(--border)'};border-radius:10px;padding:10px" onclick="onProbetoolTischClick('${t.id}')">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="font-weight:700">${e(t.name)}</span>
+        <span style="font-weight:400;color:${over?'var(--rose-d)':'var(--text-l)'};font-size:.82rem">(${members.length}/${t.kapazitaet})</span>
+        <span style="margin-left:auto;display:flex;gap:4px" onclick="event.stopPropagation()">
+          <button onclick="adjustProbetoolTischKapazitaet('${t.id}',-1)" title="Kapazität verringern" style="border:1px solid var(--border);background:var(--white);border-radius:5px;width:22px;height:22px;cursor:pointer;line-height:1">−</button>
+          <button onclick="adjustProbetoolTischKapazitaet('${t.id}',1)" title="Kapazität erhöhen" style="border:1px solid var(--border);background:var(--white);border-radius:5px;width:22px;height:22px;cursor:pointer;line-height:1">+</button>
+        </span>
+      </div>`;
+    if(!members.length)html+='<div style="font-size:.8rem;color:var(--text-l)">Kein Gast zugewiesen.</div>';
+    members.forEach(g=>{
+      const bekannteListe=members.filter(o=>o.id!==g.id).map(o=>({gast:o,kategorie:ptBekanntKategorie(g.id,o.id)})).filter(x=>x.kategorie!=null);
+      const bekannt=bekannteListe.length;
+      const bg=bekannt>=2?'#e8f5e9':bekannt===1?'#fff8e1':'#fde8e8';
+      const fg=bekannt>=2?'#6ba36e':bekannt===1?'var(--gold)':'var(--rose-d)';
+      const expanded=_ptExpanded.has(g.id);
+      const isSel=_ptSelGast===g.id;
+      html+=`<div style="padding:5px 0" onclick="event.stopPropagation();onProbetoolGuestClick('${g.id}','${t.id}')">
+        <div style="display:flex;align-items:center;gap:8px;cursor:pointer;${isSel?'box-shadow:0 0 0 2px var(--gold);border-radius:6px;padding:2px 4px;margin:-2px -4px':''}">
+          <span class="grp-dot" style="background:${gc(g.gruppe)}"></span>
+          <span style="flex:1;font-size:.9rem">${e(g.name)}</span>
+          <span class="badge" style="background:${bg};color:${fg};cursor:pointer" onclick="event.stopPropagation();toggleProbetoolBekanntDetails('${g.id}')" title="Klicken für Namen">${bekannt} bekannt</span>
+        </div>
+        ${expanded?`<div style="font-size:.78rem;color:var(--text-l);padding-left:17px;margin-top:2px">${bekannteListe.length?bekannteListe.map(x=>`${PT_KATEGORIEN[x.kategorie].icon} ${e(x.gast.name)}`).join(', '):'—'}</div>`:''}
+      </div>`;
+    });
+    html+='</div>';
+  });
+  container.innerHTML=html;
+  renderProbetoolTischVisual();
+}
+// Interaktive Vorschau des berechneten Ergebnisses im selben runden Tisch-Look wie der echte
+// Sitzplan-Tab – mit Drag&Drop und Klick-Verschieben wie dort (ptOnSeatDrop/ptOnSeatClick/
+// ptOnEmptySeatClick, analog zu onSeatDrop/onSeatClick/onEmptySeatClick), aber komplett auf
+// ST.probetool.ergebnis gespeichert. Der echte Sitzplan bleibt dabei unangetastet.
+function renderProbetoolTischVisual(){
+  const container=document.getElementById('probetool-tisch-grid');
+  if(!container)return;
+  const erg=ST.probetool.ergebnis;
+  if(!erg){container.innerHTML='';renderProbetoolUnassigned();return;}
+  ptEnsureSeatIdx();
+  const pool=getProbetoolGuestPool();
+  let html='';
+  ST.probetool.tische.forEach(t=>{
+    const members=pool.filter(g=>erg.zuweisung[g.id]===t.id);
+    const usedSeats=members.reduce((s,g)=>s+ptGuestSize(g),0);
+    const isOver=usedSeats>t.kapazitaet;
+    const seatDivs=[];
+    const renderedIds=new Set();
+    for(let i=0;i<t.kapazitaet;i++){
+      const g=ptGuestAtSeat(t.id,i,pool,erg);
+      if(!g){
+        const dc=_ptSelGast?' drop-target':'';
+        seatDivs.push(`<div class="tisch-seat${dc}" title="${_ptSelGast?'Hierhin setzen':'Freier Platz'}" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="ptOnSeatDrop(event,'${t.id}',${i})" onclick="ptOnEmptySeatClick(event,'${t.id}',${i})"></div>`);
+      }else{
+        renderedIds.add(g.id);
+        const subIdx=i-erg.seatIdx[g.id];
+        const dn=splitGuestNames(g.name,ptGuestSize(g))[subIdx];
+        const isSel=g.id===_ptSelGast;
+        const ec=(isSel?' selected':'')+(_ptSelGast&&!isSel?' drop-target':'');
+        seatDivs.push(`<div class="tisch-seat belegt${ec}" draggable="true" style="background:${gc(g.gruppe)}" title="${e(dn)} (${e(g.name)}) · ${e(g.gruppe)}" ondragstart="ptOnSeatDragStart(event,'${g.id}')" ondragend="ptOnSeatDragEnd(event)" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)" ondragleave="onDragLeave(event)" ondrop="ptOnSeatDrop(event,'${t.id}',${i})" onclick="ptOnSeatClick(event,'${g.id}','${t.id}',${i})">${e(dn.slice(0,5))}<button class="seat-remove" onclick="event.stopPropagation();ptRemoveFromTisch('${g.id}')" title="Vom Tisch entfernen">×</button></div>`);
+      }
+    }
+    const overflow=members.filter(g=>!renderedIds.has(g.id));
+    const n=t.kapazitaet,lc=2,tc=Math.ceil((n-lc*2)/2),bc=n-lc*2-tc;
+    const topD=seatDivs.slice(0,tc),botD=seatDivs.slice(tc,tc+bc);
+    const leftD=seatDivs.slice(tc+bc,tc+bc+lc),rightD=seatDivs.slice(tc+bc+lc);
+    html+=`<div class="tisch-visual-wrap">
+      <div class="tisch-seats-top">${topD.join('')}</div>
+      <div class="tisch-middle-row">
+        <div class="tisch-seats-side">${leftD.join('')}</div>
+        <div class="tisch-surface${isOver?' over':''}">
+          <span class="tisch-surface-name">${e(t.name)}</span>
+          <span class="tisch-surface-cap${isOver?' over':''}">${usedSeats}/${t.kapazitaet} Plätze</span>
+        </div>
+        <div class="tisch-seats-side">${rightD.join('')}</div>
+      </div>
+      <div class="tisch-seats-bottom">${botD.join('')}</div>
+      ${overflow.length?`<div style="margin-top:6px;padding:6px 8px;background:#fde8e8;border-radius:8px;font-size:.78rem;color:var(--rose-d);max-width:220px;text-align:center">⚠ Über Kapazität, ohne Platz im Raster:<br>${overflow.map(g=>`${e(g.name)} <button onclick="ptRemoveFromTisch('${g.id}')" style="border:none;background:transparent;color:var(--rose-d);cursor:pointer;font-weight:700;padding:0 3px" title="Vom Tisch entfernen">×</button>`).join(' · ')}</div>`:''}
+    </div>`;
+  });
+  container.innerHTML=html||'<p style="color:var(--text-l);padding:20px 0">Noch keine Tische angelegt.</p>';
+  renderProbetoolUnassigned();
+}
+// Gäste, die im Probetool (z.B. durch Entfernen vom Tisch) gerade keinem Tisch zugewiesen sind –
+// analog zu renderUnassigned() im echten Sitzplan, nur Probetool-lokal.
+function renderProbetoolUnassigned(){
+  const container=document.getElementById('probetool-unassigned');
+  if(!container)return;
+  const erg=ST.probetool.ergebnis;
+  if(!erg){container.innerHTML='';return;}
+  const pool=getProbetoolGuestPool();
+  const unassigned=pool.filter(g=>erg.zuweisung[g.id]==null);
+  if(!unassigned.length){container.innerHTML='';return;}
+  container.innerHTML=`<div style="font-size:.78rem;font-weight:700;color:var(--text-l);margin:10px 0 4px">Nicht zugewiesen (${unassigned.length}) – anklicken/ziehen zum Platzieren:</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px">${unassigned.map(g=>{
+      const isSel=g.id===_ptSelGast;
+      return`<div draggable="true" ondragstart="ptOnUnassignedDragStart(event,'${g.id}')" onclick="ptOnUnassignedClick('${g.id}')" style="display:flex;align-items:center;gap:6px;padding:5px 9px;border:1px solid ${isSel?'var(--gold)':'var(--border)'};border-radius:8px;cursor:pointer;font-size:.82rem;background:${isSel?'#fff8e1':'var(--white)'}">
+        <span class="grp-dot" style="background:${gc(g.gruppe)}"></span>${e(g.name)}
+      </div>`;
+    }).join('')}</div>`;
+}
+// Kopiert das berechnete Ergebnis als lesbaren Text in die Zwischenablage (z.B. zum Einfügen in
+// WhatsApp/E-Mail oder um es an anderer Stelle als Vorlage weiterzuverwenden). Ändert nichts an den Daten.
+function copyProbetoolErgebnisAlsText(){
+  const erg=ST.probetool.ergebnis;
+  if(!erg){alert('Bitte zuerst einen Plan berechnen.');return;}
+  const pool=getProbetoolGuestPool();
+  const bloecke=ST.probetool.tische.map(t=>{
+    const members=pool.filter(g=>erg.zuweisung[g.id]===t.id);
+    if(!members.length)return null;
+    return`${t.name} (${members.length}/${t.kapazitaet}):\n${members.map(g=>'- '+g.name).join('\n')}`;
+  }).filter(Boolean);
+  const text=bloecke.join('\n\n');
+  const fertig=()=>alert('Sitzplan als Text in die Zwischenablage kopiert.');
+  const fallback=()=>{
+    const ta=document.createElement('textarea');
+    ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);
+    ta.focus();ta.select();
+    try{document.execCommand('copy');fertig();}
+    catch(err){alert('Kopieren nicht möglich. Bitte manuell markieren und kopieren:\n\n'+text);}
+    document.body.removeChild(ta);
+  };
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(fertig).catch(fallback);
+  else fallback();
+}
+// Übernimmt die fertige, im Probetool erarbeitete Verteilung final in den echten Sitzplan
+// (ST.gaeste / ST.sitzplan.tische) – überschreibt dort Tisch und Sitzplatz der betroffenen Gäste.
+// Im Probetool nicht zugewiesene ("entfernte") Gäste werden im echten Sitzplan bewusst NICHT
+// angetastet, um nichts Bestehendes ungewollt zu löschen.
+function uebernehmeProbetoolAlsSitzplan(){
+  const erg=ST.probetool.ergebnis;
+  if(!erg){alert('Bitte zuerst einen Plan berechnen.');return;}
+  if(!confirm('Diese berechnete Sitzverteilung jetzt in den echten Sitzplan übernehmen? Die aktuelle Tischzuordnung der betroffenen Gäste wird dabei überschrieben.'))return;
+  const pool=getProbetoolGuestPool();
+  const tischInfoById=new Map(ST.probetool.tische.map(t=>[t.id,{name:t.name,kapazitaet:t.kapazitaet}]));
+  tischInfoById.forEach(info=>{
+    const real=ST.sitzplan.tische.find(rt=>rt.name===info.name);
+    if(real&&info.kapazitaet>real.kapazitaet)real.kapazitaet=info.kapazitaet;
+  });
+  pool.forEach(pg=>{
+    const g=ST.gaeste.find(x=>x.id===pg.id);if(!g)return;
+    const tischId=erg.zuweisung[pg.id];
+    if(tischId==null)return;
+    const info=tischInfoById.get(tischId);if(!info)return;
+    g.tisch=info.name;
+    g.seatIdx=erg.seatIdx&&erg.seatIdx[pg.id]!=null?erg.seatIdx[pg.id]:null;
+  });
+  ST.gaeste.forEach(g=>{
+    if(g.status==='Zugesagt'&&g.tisch){
+      const t=ST.sitzplan.tische.find(x=>x.name===g.tisch);
+      if(t)normalizeSeatIdx(g,g.tisch,t.kapazitaet);
+    }
+  });
+  saveState();
+  renderSitzplan();
+  alert('Der berechnete Plan wurde in den echten Sitzplan übernommen. Du findest ihn jetzt im Sitzplan-Tab.');
+}
+
+function renderProbetool(){
+  renderProbetoolZuordnung();
+  renderProbetoolSetup();
+  renderProbetoolGruppen();
+  renderProbetoolUntergruppen();
+  renderProbetoolAffinitaetRows();
+  renderProbetoolErgebnis();
 }
 
 // ── Mehr ──────────────────────────────────────────────────────
@@ -1685,14 +2784,18 @@ loadState().then(()=>{ renderHome(); startSync(); });
 <!-- ══ MODAL: Tisch hinzufügen ══ -->
 <div id="add-tisch-modal" onclick="if(event.target===this)closeAddTischModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center">
   <div style="background:var(--white);border-radius:16px;padding:24px;width:min(380px,95vw);box-shadow:0 20px 60px rgba(0,0,0,.18)">
-    <h2 style="font-size:1rem;margin-bottom:18px">Tisch hinzufügen</h2>
+    <h2 id="add-tisch-modal-title" style="font-size:1rem;margin-bottom:18px">Tisch hinzufügen</h2>
     <div style="display:grid;grid-template-columns:1fr 100px;gap:10px;margin-bottom:16px">
       <div><label class="fl">Name *</label><input type="text" id="new-tisch-name" class="fi" placeholder="z.B. Tisch 1"></div>
-      <div><label class="fl">Plätze</label><input type="number" id="new-tisch-kap" class="fi" min="1" value="10"></div>
+      <div><label class="fl">Plätze</label><input type="number" id="new-tisch-kap" class="fi" min="1" value="10" onchange="applyTischSizeDefaults()"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div><label class="fl">Breite (m)</label><input type="number" id="new-tisch-w" class="fi" min="0.2" step="0.1"></div>
+      <div><label class="fl">Tiefe (m)</label><input type="number" id="new-tisch-h" class="fi" min="0.2" step="0.1"></div>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn btn-s" onclick="closeAddTischModal()">Abbrechen</button>
-      <button class="btn btn-p" onclick="saveTisch()">Hinzufügen</button>
+      <button class="btn btn-p" onclick="saveTisch()">Speichern</button>
     </div>
   </div>
 </div>
@@ -1720,6 +2823,23 @@ loadState().then(()=>{ renderHome(); startSync(); });
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn btn-s" onclick="closeAddElementModal()">Abbrechen</button>
       <button class="btn btn-p" onclick="saveElement()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Feste Gruppe (Probetool) ══ -->
+<div id="add-gruppe-modal" onclick="if(event.target===this)closeAddGruppeModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center">
+  <div style="background:var(--white);border-radius:16px;padding:24px;width:min(420px,95vw);max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.18)">
+    <h2 id="add-gruppe-modal-title" style="font-size:1rem;margin-bottom:18px">Feste Gruppe hinzufügen</h2>
+    <div style="margin-bottom:12px"><label class="fl">Name</label><input type="text" id="new-gruppe-name" class="fi" placeholder="z.B. Emily &amp; Frank"></div>
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="new-gruppe-search" placeholder="Gast suchen …" oninput="renderGruppeAuswahlListe()">
+    </div>
+    <div id="new-gruppe-liste" style="max-height:260px;overflow-y:auto;margin-bottom:14px"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-s" onclick="closeAddGruppeModal()">Abbrechen</button>
+      <button class="btn btn-p" onclick="saveGruppe()">Speichern</button>
     </div>
   </div>
 </div>
