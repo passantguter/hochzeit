@@ -197,14 +197,29 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .info-row:last-child{border-bottom:none}
 .info-dt{font-weight:600;width:140px;flex-shrink:0;color:var(--text-l)}
 
+/* Getränke */
+.gt-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.gt-table{width:100%;border-collapse:collapse;margin-bottom:2px}
+.gt-table th{background:#f5f0eb;padding:8px 10px;text-align:left;font-size:.7rem;font-weight:700;
+  color:var(--text-l);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+.gt-table td{padding:7px 10px;font-size:.86rem;border-bottom:1px solid #f0ebe4;white-space:nowrap}
+.gt-table tr:last-child td{border-bottom:none}
+.gt-sub{font-size:.78rem;color:var(--text-l);line-height:1.5}
+.gt-total{display:flex;justify-content:space-between;padding:10px 10px 0;font-weight:700;
+  font-size:.9rem;border-top:1.5px solid var(--border);margin-top:6px}
+.gt-note{background:var(--cream);border-left:3px solid var(--gold);border-radius:0 10px 10px 0;
+  padding:12px 14px;font-size:.85rem;line-height:1.55;margin-bottom:12px}
+.gt-note b{color:var(--text)}
+
 /* ══════════════════════════════════════════
    MOBILE  (default – < 768 px)
 ══════════════════════════════════════════ */
 #top-nav{display:none}
 #bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--white);
   border-top:1px solid var(--border);display:flex;z-index:100;
-  padding-bottom:env(safe-area-inset-bottom)}
-.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding-bottom:env(safe-area-inset-bottom);overflow-x:auto;scrollbar-width:none}
+#bottom-nav::-webkit-scrollbar{display:none}
+.nav-btn{flex:1 0 auto;min-width:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;
   padding:8px 4px;gap:2px;border:none;background:none;cursor:pointer;
   font-size:.62rem;color:var(--text-l);font-family:inherit;transition:color .15s;white-space:nowrap}
 .nav-btn.active{color:var(--sage-d);font-weight:700}
@@ -275,6 +290,33 @@ html,body{height:100%;background:var(--bg);color:var(--text);
   #content{padding:0;max-width:100%}
   .tab{display:block!important;page-break-after:always}
 }
+
+/* Getränkekarte: eigener, isolierter Druckmodus */
+@media print{
+  body.printing-menu #top-nav,
+  body.printing-menu #bottom-nav,
+  body.printing-menu #app{display:none!important}
+  body.printing-menu #getraenke-menu-modal{
+    position:static!important;display:block!important;background:#fff!important;
+    inset:auto!important;padding:0!important}
+  body.printing-menu #getraenke-menu-modal>div{box-shadow:none!important;width:100%!important;
+    max-height:none!important;overflow:visible!important;border-radius:0!important;
+    background:#fff!important;margin:0!important}
+  body.printing-menu .no-print{display:none!important}
+}
+
+/* Getränkekarte: Restaurant-Menü-Optik */
+.menu-card{padding:44px 34px 30px;font-family:Georgia,'Iowan Old Style','Palatino Linotype',serif;
+  color:#3a3330;text-align:center}
+.mc-eyebrow{font-size:.66rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold)}
+.menu-card h2{font-size:1.75rem;font-weight:400;letter-spacing:.05em;margin:6px 0 4px}
+.mc-sub{font-size:.78rem;color:var(--text-l);font-style:italic;margin-bottom:22px}
+.mc-rule{width:52px;height:1px;background:var(--gold);margin:0 auto 26px}
+.mc-section{margin-bottom:24px}
+.mc-section-title{font-size:.74rem;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:12px}
+.mc-item{font-size:.98rem;padding:4px 0;line-height:1.3}
+.mc-item-note{display:block;font-size:.68rem;color:var(--text-l);font-style:italic;margin-top:1px;letter-spacing:.03em}
 </style>
 </head>
 <body>
@@ -298,6 +340,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
       <button class="top-tab" onclick="showTab('sitzplan',this,'top')">Sitzplan</button>
       <button class="top-tab" onclick="showTab('probetool',this,'top')">Probetool</button>
       <button class="top-tab" onclick="showTab('mehr',this,'top')">Zeitplan &amp; Mehr</button>
+      <button class="top-tab" onclick="showTab('getraenke',this,'top')">Getränke</button>
     </div>
   </div>
 </header>
@@ -553,6 +596,91 @@ html,body{height:100%;background:var(--bg);color:var(--text);
     </div>
   </div>
 
+  <!-- ══ GETRÄNKE ══ -->
+  <div id="tab-getraenke" class="tab">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+      <div>
+        <span style="font-size:1.1rem;font-weight:700">Getränke</span>
+        <div style="font-size:.82rem;color:var(--text-l);margin-top:2px">Rezeptrechner &amp; Inventur — alle Mengen und Kosten sind editierbar</div>
+      </div>
+      <button class="btn btn-p btn-sm" onclick="openGetraenkeMenu()">🍸 Getränkekarte anzeigen</button>
+    </div>
+
+    <div class="section-lbl">🍓 Beeren-Limo — Rezeptrechner</div>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+        <label style="font-size:.85rem;font-weight:600">Zielmenge</label>
+        <input type="number" min="4" step="1" id="gt-limo-ziel" class="budget-input" style="max-width:90px" onchange="updGtLimoZiel(this.value)">
+        <span style="font-size:.85rem;color:var(--text-l)">Liter — <span id="gt-limo-ansaetze"></span></span>
+      </div>
+      <div class="gt-table-wrap">
+        <table class="gt-table">
+          <thead><tr><th>Zutat</th><th>Pro Ansatz (4 l)</th><th id="gt-limo-ziel-th"></th></tr></thead>
+          <tbody id="gt-limo-tbody"></tbody>
+        </table>
+      </div>
+      <div class="gt-sub" style="margin-top:8px">Ein Ansatz sind immer 4 l — zwischendurch wird nachgesetzt. Die Gartenlimo für die Mischung kommt aus dem Bestand, dafür steht unten ein Kasten extra auf der Liste.</div>
+    </div>
+
+    <div class="section-lbl">☀️ Nachmittag in der Gemeinde</div>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <label style="font-size:.85rem;font-weight:600">Personen</label>
+        <input type="number" min="0" id="gt-nm-personen" class="budget-input" style="max-width:90px" onchange="updGtScalar('nachmittagPersonen',this.value)">
+      </div>
+      <div class="gt-table-wrap">
+        <table class="gt-table">
+          <thead><tr><th>Position</th><th>Menge</th><th>Einheit</th><th>Notiz</th><th></th></tr></thead>
+          <tbody id="gt-nachmittag-tbody"></tbody>
+        </table>
+      </div>
+      <button class="btn btn-s btn-sm" style="margin-top:10px" onclick="addGtRow('nachmittag')">+ Position</button>
+    </div>
+
+    <div class="section-lbl">🌙 Abend im Badsaal</div>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <label style="font-size:.85rem;font-weight:600">Gäste</label>
+        <input type="number" min="0" id="gt-ab-gaeste" class="budget-input" style="max-width:90px" onchange="updGtScalar('abendGaeste',this.value)">
+      </div>
+      <div class="gt-table-wrap">
+        <table class="gt-table">
+          <thead><tr><th>Position</th><th>Menge</th><th>Einheit</th><th>Kategorie</th><th>Notiz</th><th></th></tr></thead>
+          <tbody id="gt-abend-tbody"></tbody>
+        </table>
+      </div>
+      <button class="btn btn-s btn-sm" style="margin-top:10px" onclick="addGtRow('abend')">+ Position</button>
+    </div>
+
+    <div class="section-lbl">🍹 Aperitif-Behälter — ab 17:00</div>
+    <div class="card">
+      <div class="gt-sub" style="margin-bottom:8px">Richtwert: 1 Liter ergibt 5 Gläser (200 ml/Glas) — die Beeren-Limo-Menge kommt aus dem Rezeptrechner oben.</div>
+      <div class="gt-table-wrap">
+        <table class="gt-table">
+          <thead><tr><th>Behälter</th><th>Menge (l)</th><th>Ergibt</th><th></th></tr></thead>
+          <tbody id="gt-aperitif-tbody"></tbody>
+        </table>
+      </div>
+      <button class="btn btn-s btn-sm" style="margin-top:10px" onclick="addGtRow('aperitif')">+ Behälter</button>
+    </div>
+
+    <div class="section-lbl">🛒 Zutaten &amp; Zubehör für die Behälter</div>
+    <div class="card">
+      <div class="gt-table-wrap">
+        <table class="gt-table">
+          <thead><tr><th>Position</th><th>Menge</th><th>ca. Kosten (€)</th><th></th></tr></thead>
+          <tbody id="gt-zutaten-tbody"></tbody>
+        </table>
+      </div>
+      <button class="btn btn-s btn-sm" style="margin-top:10px" onclick="addGtRow('zutaten')">+ Position</button>
+      <div class="gt-total"><span>Geschätzt gesamt</span><span id="gt-zutaten-total"></span></div>
+      <div class="gt-sub" style="margin-top:10px">Gläser: rund 60 Stielgläser für die Aperitifs, dazu Wasser-, Bier- und Weingläser für den Abend sowie 300 Sektgläser für den Nachmittag.</div>
+    </div>
+
+    <div class="section-lbl">📌 Zwei Hinweise</div>
+    <div id="gt-hinweise"></div>
+  </div>
+
 </div><!-- /content -->
 
 <!-- ══ MOBILE BOTTOM NAV ══ -->
@@ -585,8 +713,24 @@ html,body{height:100%;background:var(--bg);color:var(--text);
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
     Mehr
   </button>
+  <button class="nav-btn" onclick="showTab('getraenke',this,'bot')">
+    <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+    Getränke
+  </button>
 </nav>
 </div><!-- /app -->
+
+<!-- ══ MODAL: Getränkekarte ══ -->
+<div id="getraenke-menu-modal" onclick="if(event.target===this)closeGetraenkeMenu()"
+  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fffaf3;border-radius:6px;width:min(480px,95vw);max-height:92vh;overflow-y:auto;box-shadow:0 24px 70px rgba(0,0,0,.35)">
+    <div class="menu-card" id="menu-card-content"></div>
+    <div class="no-print" style="display:flex;justify-content:center;gap:10px;padding:0 24px 26px">
+      <button class="btn btn-s btn-sm" onclick="closeGetraenkeMenu()">Schließen</button>
+      <button class="btn btn-p btn-sm" onclick="window.print()">🖨 Drucken</button>
+    </div>
+  </div>
+</div>
 
 <!-- ══ MODAL: Gast ══ -->
 <div id="gast-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center">
@@ -622,7 +766,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 <script>
 'use strict';
 // ── Data ──────────────────────────────────────────────────────
-const INITIAL_DATA={hochzeit:{datum:'2026-09-05',standesamt:'2026-09-04',location:'Badsaal Schnaittach',braut:'Paulina',braeutigam:'Jan',budget:15000},gaeste:[{id:'g1',name:'Josephine Chan',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g2',name:'Jossy Giesbrecht',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g3',name:'Emily + Frank',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g4',name:'Ee Laine',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g5',name:'Joel',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g6',name:'Chendi',personen:1,status:'Abgesagt',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g7',name:'Alan + Lynn',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g8',name:'Saki',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g9',name:'Grace',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g10',name:'Liz + Silas',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g11',name:'Jo (Pheline)',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g12',name:'Simon + Thea',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g13',name:'Mali',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g14',name:'Nina',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g15',name:'Ravil & Maftuna',personen:2,status:'Abgesagt',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g16',name:'Josi',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g17',name:'Ida',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g18',name:'Lorenz',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:'Friedrichstraße 50'},{id:'g19',name:'Rebekkah',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g20',name:'Lennart',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g21',name:'Anabel',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g22',name:'Fabi + Julie',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g23',name:'Reini + Tanja',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g24',name:'Ede + Cathy',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g25',name:'Bernhard + Heike',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g26',name:'Conny + Helmfried',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g27',name:'Isa',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g28',name:'Nadine',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g29',name:'Basti',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g30',name:'Oma',personen:1,status:'Abgesagt',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g31',name:'Eltern + Finja',personen:3,status:'Eingeladen',gruppe:'Familie Paulina',tisch:'',notiz:''},{id:'g32',name:'Dankwart + Martina',personen:2,status:'Eingeladen',gruppe:'Familie Paulina',tisch:'',notiz:''},{id:'g33',name:'Franzi + Steffen + Baby',personen:2,status:'Eingeladen',gruppe:'Familie Paulina',tisch:'',notiz:''},{id:'g34',name:'Ethan + Paula',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g35',name:'Yeri',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g36',name:'Mimi',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g37',name:'Louis + Nadine',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g38',name:'Nick',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g39',name:'Raphi + Esther',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g40',name:'Robin + Claudette + Kind',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g41',name:'Rahel Ziegler',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g42',name:'Chris + Anna',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g43',name:'Jakob',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g44',name:'Luisa',personen:1,status:'Abgesagt',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g45',name:'Mia',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g46',name:'Joshi',personen:1,status:'Abgesagt',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g47',name:'David + Pauline',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g48',name:'Eltern + Kai',personen:3,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g49',name:'Heike + Sven',personen:2,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g50',name:'Görge + Antek + Ida',personen:3,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g51',name:'Sonja',personen:1,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g52',name:'Marlies + Albert',personen:2,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g53',name:'Arne',personen:1,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g54',name:'Waltraud + Norbert',personen:2,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g55',name:'Mai-Ly',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g56',name:'Jannis',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g57',name:'Jean',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g58',name:'Nick + Helene',personen:2,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g59',name:'Johann',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g60',name:'Ali',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g61',name:'Pablo',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g62',name:'Korbi',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g63',name:'Timo + Bekki',personen:2,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g64',name:'Flo',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g65',name:'Erik',personen:1,status:'Abgesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g66',name:'Jannis + Celine',personen:2,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:'Trauung nur?'},{id:'g67',name:'Hannes',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g68',name:'Ruben + Debby',personen:2,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g69',name:'Lukas',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g70',name:'Nico',personen:1,status:'Abgesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g71',name:'Karl',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g72',name:'Lucas + Caroline + Kinder',personen:5,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g73',name:'Markus & Daniela',personen:2,status:'Liste',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g74',name:'Max',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g75',name:'Bjarne',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g76',name:'Bene',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g77',name:'Elias',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g78',name:'Vero',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g79',name:'Gerrit',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g80',name:'Valentin',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g81',name:'Marie',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g82',name:'Paul',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g83',name:'Leon',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g84',name:'David Schnurr',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g85',name:'Jan + Paulina',personen:2,status:'Zugesagt',gruppe:'Brautpaar',tisch:'',notiz:''}],budget:{gesamtbudget:15000,kategorien:[{id:'b1',name:'Location',geschaetzt:0,tatsaechlich:0,notiz:'Badsaal Schnaittach – Vertrag unterschrieben'},{id:'b2',name:'Catering',geschaetzt:5778,tatsaechlich:0,notiz:'Grillmeister Pausch angefragt'},{id:'b3',name:'Getränke',geschaetzt:3000,tatsaechlich:0,notiz:''},{id:'b4',name:'Hochzeitstorte',geschaetzt:0,tatsaechlich:0,notiz:'Isa fragen'},{id:'b5',name:'Foto / Video',geschaetzt:500,tatsaechlich:0,notiz:''},{id:'b6',name:'Musik',geschaetzt:0,tatsaechlich:0,notiz:''},{id:'b7',name:'Ringe',geschaetzt:1217,tatsaechlich:1217,notiz:''},{id:'b8',name:'Kleidung',geschaetzt:1800,tatsaechlich:0,notiz:''},{id:'b9',name:'Brautstrauß',geschaetzt:0,tatsaechlich:0,notiz:''},{id:'b10',name:'Deko',geschaetzt:500,tatsaechlich:0,notiz:''},{id:'b11',name:'Trauungskosten',geschaetzt:200,tatsaechlich:0,notiz:''},{id:'b12',name:'Brunchen Standesamt',geschaetzt:240,tatsaechlich:0,notiz:''},{id:'b13',name:'Reserve',geschaetzt:1500,tatsaechlich:0,notiz:''},{id:'b14',name:'Sonstiges',geschaetzt:240,tatsaechlich:0,notiz:''}]},todos:[{id:'t1',text:'Einladung Gemeinde + Kuchen an Mimi',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Catering & Getränke'},{id:'t2',text:'Privat Leute wegen Kuchen anfragen',erledigt:false,verantwortlich:'',deadline:'',notiz:'Emails schreiben',kategorie:'Catering & Getränke'},{id:'t3',text:'Serviceteam Getränke Abend anfragen',erledigt:false,verantwortlich:'',deadline:'',notiz:'Danilo und Elias angefragt',kategorie:'Organisation'},{id:'t4',text:'Abspül- und Aufräumteam anfragen',erledigt:false,verantwortlich:'Jan Gehrke / Christine Gehrke',deadline:'',notiz:'',kategorie:'Organisation'},{id:'t5',text:'Aufräumteam für Badsaal',erledigt:false,verantwortlich:'Alex Schropp?',deadline:'',notiz:'',kategorie:'Organisation'},{id:'t6',text:'Abspülen Badsaal – nächster Tag?',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Organisation'},{id:'t7',text:'Übersetzer organisieren',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Zeremonie & Musik'},{id:'t8',text:'Sektempfang am Nachmittag klären',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Catering & Getränke'},{id:'t9',text:'Technik am Abend klären',erledigt:false,verantwortlich:'Medientechnik',deadline:'',notiz:'',kategorie:'Organisation'},{id:'t10',text:'Autos anfragen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Organisation'},{id:'t11',text:'Sitzordnung erstellen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Gäste'},{id:'t12',text:'Ringe bestellen',erledigt:true,verantwortlich:'',deadline:'',notiz:'',kategorie:'Persönliches'},{id:'t13',text:'Deko kaufen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Deko & Ausstattung'},{id:'t14',text:'Getränke kaufen',erledigt:false,verantwortlich:'Heinz',deadline:'',notiz:'Plan machen',kategorie:'Catering & Getränke'},{id:'t15',text:'Blumen bestellen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Deko & Ausstattung'},{id:'t16',text:'Brautstrauß bestellen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Deko & Ausstattung'},{id:'t17',text:'Standesamt Kleidung',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Kleidung'},{id:'t18',text:'Hochzeitstanz mit Kai absprechen',erledigt:false,verantwortlich:'Kai',deadline:'',notiz:'',kategorie:'Zeremonie & Musik'},{id:'t19',text:'Fotobox organisieren',erledigt:false,verantwortlich:'',deadline:'',notiz:'mit Polaroids',kategorie:'Deko & Ausstattung'},{id:'t20',text:'Gästebuch',erledigt:false,verantwortlich:'Helga',deadline:'',notiz:'',kategorie:'Deko & Ausstattung'},{id:'t21',text:'Gastgeschenke',erledigt:false,verantwortlich:'Helga',deadline:'',notiz:'',kategorie:'Deko & Ausstattung'},{id:'t22',text:'Achim nachhaken (Musikteam)',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Zeremonie & Musik'},{id:'t23',text:'Programm für Abend erstellen',erledigt:false,verantwortlich:'Papa',deadline:'',notiz:'An Papa geschickt',kategorie:'Zeremonie & Musik'},{id:'t24',text:'Ehevorbereitungskurs',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Persönliches'},{id:'t25',text:'Tanzkurs',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Persönliches'},{id:'t26',text:'Catering E-Mail abschicken',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Catering & Getränke'},{id:'t27',text:'Trautmode kaufen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Kleidung'},{id:'t28',text:'Schuhe kaufen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Kleidung'}],zeitplan:{freitag:[{id:'z1',zeit:'09:40',ende:'',titel:'Vor Ort sein',notiz:''},{id:'z2',zeit:'10:00',ende:'10:15',titel:'Standesamtliche Trauung',notiz:''},{id:'z3',zeit:'10:30',ende:'12:00',titel:'Brunchen – Cafe und Bar Celona',notiz:'Im Anschluss Standesamt'},{id:'z4',zeit:'16:40',ende:'',titel:'Fahrt des Brautpaares',notiz:''}],samstag:[{id:'z5',zeit:'12:30',ende:'12:40',titel:'Start / Einlass Gottesdienst',notiz:''},{id:'z6',zeit:'12:40',ende:'12:44',titel:'Einzug der Braut',notiz:'gratitude – instrumental, Piano'},{id:'z7',zeit:'12:44',ende:'12:50',titel:'Begrüßung + Hinführung',notiz:''},{id:'z8',zeit:'12:50',ende:'12:52',titel:'Gebet',notiz:''},{id:'z9',zeit:'12:52',ende:'12:56',titel:'Lied 1',notiz:'»So groß ist der Herr« – Chris Tomlin'},{id:'z10',zeit:'12:56',ende:'13:00',titel:'Sündenbekenntnis / Gebet',notiz:''},{id:'z11',zeit:'13:00',ende:'13:05',titel:'Lied 2',notiz:'»Bless the Lord, oh my soul«'},{id:'z12',zeit:'13:05',ende:'13:09',titel:'Textlesung',notiz:'Mimi oder Karl'},{id:'z13',zeit:'13:09',ende:'13:13',titel:'Lied 3',notiz:'»Thank you Jesus for the blood«'},{id:'z14',zeit:'13:13',ende:'13:33',titel:'Traupredigt',notiz:'Jan-Peter'},{id:'z15',zeit:'13:33',ende:'13:36',titel:'Musikalisches Zwischenspiel',notiz:''},{id:'z16',zeit:'13:36',ende:'13:49',titel:'Ehezeremonie',notiz:'Traufrage, Versprechen, Ringtausch, Segnung'},{id:'z17',zeit:'13:49',ende:'13:54',titel:'Grußwort & Informationen',notiz:''},{id:'z18',zeit:'13:58',ende:'14:05',titel:'Segenslied & Auszug des Brautpaares',notiz:'»Wenn ist mir wohl in dem Herrn«'},{id:'z19',zeit:'13:45',ende:'16:30',titel:'Kaffee / Kuchen / Sektempfang',notiz:'Torte 13:45 Uhr'},{id:'z20',zeit:'17:00',ende:'',titel:'Ankunft Badsaal Schnaittach',notiz:''},{id:'z21',zeit:'18:00',ende:'',titel:'Abendessen',notiz:''}]},dienstleister:[{id:'d1',kategorie:'Location',name:'Badsaal Schnaittach',kontakt:'',kosten:'',status:'Vertrag unterschrieben',notiz:'Türen zu 22:00 Uhr. Zehnertische. Klavier vorhanden.'},{id:'d2',kategorie:'Catering',name:'Grillmeister Pausch',kontakt:'',kosten:'225€ + 27,99€/Pers.',status:'Angefragt',notiz:''},{id:'d3',kategorie:'Catering',name:'Wahler Partyservice',kontakt:'',kosten:'ca. 6.500€',status:'Abgesagt',notiz:''},{id:'d4',kategorie:'Catering',name:'Gelbes Haus Partyservice',kontakt:'',kosten:'43€/Pers. + 710€',status:'Abgesagt',notiz:''},{id:'d5',kategorie:'Musik',name:'Nadine',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d6',kategorie:'Musik',name:'Rahel',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d7',kategorie:'Musik',name:'Christian',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d8',kategorie:'Musik',name:'Katherina',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d9',kategorie:'Musik',name:'Mirjam',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d10',kategorie:'Musik',name:'Clara',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d11',kategorie:'Musik',name:'Yeri',kontakt:'',kosten:'',status:'Angefragt',notiz:'Musikteam'},{id:'d12',kategorie:'Musik',name:'Achim',kontakt:'',kosten:'',status:'Angefragt',notiz:'Musikteamleitung – nachhaken!'},{id:'d13',kategorie:'Foto/Video',name:'Fotograf (offen)',kontakt:'',kosten:'500€ geplant',status:'Offen',notiz:''}],sitzplan:{tische:[]}};
+const INITIAL_DATA={hochzeit:{datum:'2026-09-05',standesamt:'2026-09-04',location:'Badsaal Schnaittach',braut:'Paulina',braeutigam:'Jan',budget:15000},gaeste:[{id:'g1',name:'Josephine Chan',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g2',name:'Jossy Giesbrecht',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g3',name:'Emily + Frank',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g4',name:'Ee Laine',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g5',name:'Joel',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g6',name:'Chendi',personen:1,status:'Abgesagt',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g7',name:'Alan + Lynn',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g8',name:'Saki',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g9',name:'Grace',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g10',name:'Liz + Silas',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g11',name:'Jo (Pheline)',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g12',name:'Simon + Thea',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g13',name:'Mali',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g14',name:'Nina',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g15',name:'Ravil & Maftuna',personen:2,status:'Abgesagt',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g16',name:'Josi',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g17',name:'Ida',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g18',name:'Lorenz',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:'Friedrichstraße 50'},{id:'g19',name:'Rebekkah',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g20',name:'Lennart',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g21',name:'Anabel',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g22',name:'Fabi + Julie',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g23',name:'Reini + Tanja',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g24',name:'Ede + Cathy',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g25',name:'Bernhard + Heike',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g26',name:'Conny + Helmfried',personen:2,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g27',name:'Isa',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g28',name:'Nadine',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g29',name:'Basti',personen:1,status:'Eingeladen',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g30',name:'Oma',personen:1,status:'Abgesagt',gruppe:'Freunde Paulina',tisch:'',notiz:''},{id:'g31',name:'Eltern + Finja',personen:3,status:'Eingeladen',gruppe:'Familie Paulina',tisch:'',notiz:''},{id:'g32',name:'Dankwart + Martina',personen:2,status:'Eingeladen',gruppe:'Familie Paulina',tisch:'',notiz:''},{id:'g33',name:'Franzi + Steffen + Baby',personen:2,status:'Eingeladen',gruppe:'Familie Paulina',tisch:'',notiz:''},{id:'g34',name:'Ethan + Paula',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g35',name:'Yeri',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g36',name:'Mimi',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g37',name:'Louis + Nadine',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g38',name:'Nick',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g39',name:'Raphi + Esther',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g40',name:'Robin + Claudette + Kind',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g41',name:'Rahel Ziegler',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g42',name:'Chris + Anna',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g43',name:'Jakob',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g44',name:'Luisa',personen:1,status:'Abgesagt',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g45',name:'Mia',personen:1,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g46',name:'Joshi',personen:1,status:'Abgesagt',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g47',name:'David + Pauline',personen:2,status:'Eingeladen',gruppe:'Gemeinsame Freunde',tisch:'',notiz:''},{id:'g48',name:'Eltern + Kai',personen:3,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g49',name:'Heike + Sven',personen:2,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g50',name:'Görge + Antek + Ida',personen:3,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g51',name:'Sonja',personen:1,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g52',name:'Marlies + Albert',personen:2,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g53',name:'Arne',personen:1,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g54',name:'Waltraud + Norbert',personen:2,status:'Eingeladen',gruppe:'Familie Jan',tisch:'',notiz:''},{id:'g55',name:'Mai-Ly',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g56',name:'Jannis',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g57',name:'Jean',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g58',name:'Nick + Helene',personen:2,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g59',name:'Johann',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g60',name:'Ali',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g61',name:'Pablo',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g62',name:'Korbi',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g63',name:'Timo + Bekki',personen:2,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g64',name:'Flo',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g65',name:'Erik',personen:1,status:'Abgesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g66',name:'Jannis + Celine',personen:2,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:'Trauung nur?'},{id:'g67',name:'Hannes',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g68',name:'Ruben + Debby',personen:2,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g69',name:'Lukas',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g70',name:'Nico',personen:1,status:'Abgesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g71',name:'Karl',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g72',name:'Lucas + Caroline + Kinder',personen:5,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g73',name:'Markus & Daniela',personen:2,status:'Liste',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g74',name:'Max',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g75',name:'Bjarne',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g76',name:'Bene',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g77',name:'Elias',personen:1,status:'Zugesagt',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g78',name:'Vero',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g79',name:'Gerrit',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g80',name:'Valentin',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g81',name:'Marie',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g82',name:'Paul',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g83',name:'Leon',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g84',name:'David Schnurr',personen:1,status:'Eingeladen',gruppe:'Freunde Jan',tisch:'',notiz:''},{id:'g85',name:'Jan + Paulina',personen:2,status:'Zugesagt',gruppe:'Brautpaar',tisch:'',notiz:''}],budget:{gesamtbudget:15000,kategorien:[{id:'b1',name:'Location',geschaetzt:0,tatsaechlich:0,notiz:'Badsaal Schnaittach – Vertrag unterschrieben'},{id:'b2',name:'Catering',geschaetzt:5778,tatsaechlich:0,notiz:'Grillmeister Pausch angefragt'},{id:'b3',name:'Getränke',geschaetzt:3000,tatsaechlich:0,notiz:''},{id:'b4',name:'Hochzeitstorte',geschaetzt:0,tatsaechlich:0,notiz:'Isa fragen'},{id:'b5',name:'Foto / Video',geschaetzt:500,tatsaechlich:0,notiz:''},{id:'b6',name:'Musik',geschaetzt:0,tatsaechlich:0,notiz:''},{id:'b7',name:'Ringe',geschaetzt:1217,tatsaechlich:1217,notiz:''},{id:'b8',name:'Kleidung',geschaetzt:1800,tatsaechlich:0,notiz:''},{id:'b9',name:'Brautstrauß',geschaetzt:0,tatsaechlich:0,notiz:''},{id:'b10',name:'Deko',geschaetzt:500,tatsaechlich:0,notiz:''},{id:'b11',name:'Trauungskosten',geschaetzt:200,tatsaechlich:0,notiz:''},{id:'b12',name:'Brunchen Standesamt',geschaetzt:240,tatsaechlich:0,notiz:''},{id:'b13',name:'Reserve',geschaetzt:1500,tatsaechlich:0,notiz:''},{id:'b14',name:'Sonstiges',geschaetzt:240,tatsaechlich:0,notiz:''}]},todos:[{id:'t1',text:'Einladung Gemeinde + Kuchen an Mimi',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Catering & Getränke'},{id:'t2',text:'Privat Leute wegen Kuchen anfragen',erledigt:false,verantwortlich:'',deadline:'',notiz:'Emails schreiben',kategorie:'Catering & Getränke'},{id:'t3',text:'Serviceteam Getränke Abend anfragen',erledigt:false,verantwortlich:'',deadline:'',notiz:'Danilo und Elias angefragt',kategorie:'Organisation'},{id:'t4',text:'Abspül- und Aufräumteam anfragen',erledigt:false,verantwortlich:'Jan Gehrke / Christine Gehrke',deadline:'',notiz:'',kategorie:'Organisation'},{id:'t5',text:'Aufräumteam für Badsaal',erledigt:false,verantwortlich:'Alex Schropp?',deadline:'',notiz:'',kategorie:'Organisation'},{id:'t6',text:'Abspülen Badsaal – nächster Tag?',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Organisation'},{id:'t7',text:'Übersetzer organisieren',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Zeremonie & Musik'},{id:'t8',text:'Sektempfang am Nachmittag klären',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Catering & Getränke'},{id:'t9',text:'Technik am Abend klären',erledigt:false,verantwortlich:'Medientechnik',deadline:'',notiz:'',kategorie:'Organisation'},{id:'t10',text:'Autos anfragen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Organisation'},{id:'t11',text:'Sitzordnung erstellen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Gäste'},{id:'t12',text:'Ringe bestellen',erledigt:true,verantwortlich:'',deadline:'',notiz:'',kategorie:'Persönliches'},{id:'t13',text:'Deko kaufen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Deko & Ausstattung'},{id:'t14',text:'Getränke kaufen',erledigt:false,verantwortlich:'Heinz',deadline:'',notiz:'Plan machen',kategorie:'Catering & Getränke'},{id:'t15',text:'Blumen bestellen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Deko & Ausstattung'},{id:'t16',text:'Brautstrauß bestellen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Deko & Ausstattung'},{id:'t17',text:'Standesamt Kleidung',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Kleidung'},{id:'t18',text:'Hochzeitstanz mit Kai absprechen',erledigt:false,verantwortlich:'Kai',deadline:'',notiz:'',kategorie:'Zeremonie & Musik'},{id:'t19',text:'Fotobox organisieren',erledigt:false,verantwortlich:'',deadline:'',notiz:'mit Polaroids',kategorie:'Deko & Ausstattung'},{id:'t20',text:'Gästebuch',erledigt:false,verantwortlich:'Helga',deadline:'',notiz:'',kategorie:'Deko & Ausstattung'},{id:'t21',text:'Gastgeschenke',erledigt:false,verantwortlich:'Helga',deadline:'',notiz:'',kategorie:'Deko & Ausstattung'},{id:'t22',text:'Achim nachhaken (Musikteam)',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Zeremonie & Musik'},{id:'t23',text:'Programm für Abend erstellen',erledigt:false,verantwortlich:'Papa',deadline:'',notiz:'An Papa geschickt',kategorie:'Zeremonie & Musik'},{id:'t24',text:'Ehevorbereitungskurs',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Persönliches'},{id:'t25',text:'Tanzkurs',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Persönliches'},{id:'t26',text:'Catering E-Mail abschicken',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Catering & Getränke'},{id:'t27',text:'Trautmode kaufen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Kleidung'},{id:'t28',text:'Schuhe kaufen',erledigt:false,verantwortlich:'',deadline:'',notiz:'',kategorie:'Kleidung'}],zeitplan:{freitag:[{id:'z1',zeit:'09:40',ende:'',titel:'Vor Ort sein',notiz:''},{id:'z2',zeit:'10:00',ende:'10:15',titel:'Standesamtliche Trauung',notiz:''},{id:'z3',zeit:'10:30',ende:'12:00',titel:'Brunchen – Cafe und Bar Celona',notiz:'Im Anschluss Standesamt'},{id:'z4',zeit:'16:40',ende:'',titel:'Fahrt des Brautpaares',notiz:''}],samstag:[{id:'z5',zeit:'12:30',ende:'12:40',titel:'Start / Einlass Gottesdienst',notiz:''},{id:'z6',zeit:'12:40',ende:'12:44',titel:'Einzug der Braut',notiz:'gratitude – instrumental, Piano'},{id:'z7',zeit:'12:44',ende:'12:50',titel:'Begrüßung + Hinführung',notiz:''},{id:'z8',zeit:'12:50',ende:'12:52',titel:'Gebet',notiz:''},{id:'z9',zeit:'12:52',ende:'12:56',titel:'Lied 1',notiz:'»So groß ist der Herr« – Chris Tomlin'},{id:'z10',zeit:'12:56',ende:'13:00',titel:'Sündenbekenntnis / Gebet',notiz:''},{id:'z11',zeit:'13:00',ende:'13:05',titel:'Lied 2',notiz:'»Bless the Lord, oh my soul«'},{id:'z12',zeit:'13:05',ende:'13:09',titel:'Textlesung',notiz:'Mimi oder Karl'},{id:'z13',zeit:'13:09',ende:'13:13',titel:'Lied 3',notiz:'»Thank you Jesus for the blood«'},{id:'z14',zeit:'13:13',ende:'13:33',titel:'Traupredigt',notiz:'Jan-Peter'},{id:'z15',zeit:'13:33',ende:'13:36',titel:'Musikalisches Zwischenspiel',notiz:''},{id:'z16',zeit:'13:36',ende:'13:49',titel:'Ehezeremonie',notiz:'Traufrage, Versprechen, Ringtausch, Segnung'},{id:'z17',zeit:'13:49',ende:'13:54',titel:'Grußwort & Informationen',notiz:''},{id:'z18',zeit:'13:58',ende:'14:05',titel:'Segenslied & Auszug des Brautpaares',notiz:'»Wenn ist mir wohl in dem Herrn«'},{id:'z19',zeit:'13:45',ende:'16:30',titel:'Kaffee / Kuchen / Sektempfang',notiz:'Torte 13:45 Uhr'},{id:'z20',zeit:'17:00',ende:'',titel:'Ankunft Badsaal Schnaittach',notiz:''},{id:'z21',zeit:'18:00',ende:'',titel:'Abendessen',notiz:''}]},dienstleister:[{id:'d1',kategorie:'Location',name:'Badsaal Schnaittach',kontakt:'',kosten:'',status:'Vertrag unterschrieben',notiz:'Türen zu 22:00 Uhr. Zehnertische. Klavier vorhanden.'},{id:'d2',kategorie:'Catering',name:'Grillmeister Pausch',kontakt:'',kosten:'225€ + 27,99€/Pers.',status:'Angefragt',notiz:''},{id:'d3',kategorie:'Catering',name:'Wahler Partyservice',kontakt:'',kosten:'ca. 6.500€',status:'Abgesagt',notiz:''},{id:'d4',kategorie:'Catering',name:'Gelbes Haus Partyservice',kontakt:'',kosten:'43€/Pers. + 710€',status:'Abgesagt',notiz:''},{id:'d5',kategorie:'Musik',name:'Nadine',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d6',kategorie:'Musik',name:'Rahel',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d7',kategorie:'Musik',name:'Christian',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d8',kategorie:'Musik',name:'Katherina',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d9',kategorie:'Musik',name:'Mirjam',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d10',kategorie:'Musik',name:'Clara',kontakt:'',kosten:'',status:'Zugesagt',notiz:'Musikteam'},{id:'d11',kategorie:'Musik',name:'Yeri',kontakt:'',kosten:'',status:'Angefragt',notiz:'Musikteam'},{id:'d12',kategorie:'Musik',name:'Achim',kontakt:'',kosten:'',status:'Angefragt',notiz:'Musikteamleitung – nachhaken!'},{id:'d13',kategorie:'Foto/Video',name:'Fotograf (offen)',kontakt:'',kosten:'500€ geplant',status:'Offen',notiz:''}],sitzplan:{tische:[]},getraenke:{nachmittagPersonen:300,abendGaeste:102,limoZiel:12,nachmittag:[{id:'gn1',name:'Sprudelwasser',menge:16,einheit:'Kästen',notiz:'bei Wärme 20'},{id:'gn2',name:'Sekt',menge:45,einheit:'Flaschen',notiz:''},{id:'gn3',name:'Sekt alkoholfrei',menge:20,einheit:'Flaschen',notiz:''},{id:'gn4',name:'Orangensaft',menge:13,einheit:'Kästen à 6×1 l',notiz:''},{id:'gn5',name:'Leitungswasser',menge:28,einheit:'Karaffen',notiz:'25 bis 30'},{id:'gn6',name:'Kaffee und Milch',menge:null,einheit:'',notiz:'stellt die Gemeinde'}],abend:[{id:'ga1',name:'Sprudelwasser',menge:8,einheit:'Kästen',notiz:'',kategorie:'Softgetränke'},{id:'ga2',name:'Stilles Wasser',menge:6,einheit:'Kästen',notiz:'',kategorie:'Softgetränke'},{id:'ga3',name:'Apfelschorle',menge:3,einheit:'Kästen',notiz:'',kategorie:'Softgetränke'},{id:'ga4',name:'Kirschschorle',menge:2,einheit:'Kästen',notiz:'',kategorie:'Softgetränke'},{id:'ga5',name:'Johannisbeerschorle',menge:2,einheit:'Kästen',notiz:'',kategorie:'Softgetränke'},{id:'ga6',name:'Gartenlimo',menge:4,einheit:'Kästen',notiz:'3 zum Trinken, 1 für die Limomischung',kategorie:'Softgetränke'},{id:'ga7',name:'Cola',menge:2,einheit:'Kästen',notiz:'',kategorie:'Softgetränke'},{id:'ga8',name:'Cola Zero',menge:2,einheit:'Kästen',notiz:'',kategorie:'Softgetränke'},{id:'ga9',name:'Bier 0,5 l',menge:4,einheit:'Kästen à 20',notiz:'',kategorie:'Bier'},{id:'ga10',name:'Bier alkoholfrei',menge:1,einheit:'Kasten',notiz:'',kategorie:'Bier'},{id:'ga11',name:'Rotwein',menge:15,einheit:'Flaschen',notiz:'',kategorie:'Wein & Sekt'},{id:'ga12',name:'Volkacher Weißwein',menge:15,einheit:'Flaschen',notiz:'',kategorie:'Wein & Sekt'}],aperitif:[{id:'ap1',name:'Lillet Wild Berry',liter:4,fix:true,kategorie:'Aperitifs'},{id:'ap2',name:'Limoncello Spritz',liter:4,fix:true,kategorie:'Aperitifs'},{id:'ap3',name:'Beeren-Limo',liter:12,fix:false,kategorie:'Aperitifs'}],zutaten:[{id:'z1',name:'Lillet Blanc',menge:'2 Flaschen + 1 Reserve',kosten:33},{id:'z2',name:'Limoncello',menge:'2 Flaschen + 1 Reserve',kosten:39},{id:'z3',name:'Prosecco',menge:'3 Flaschen',kosten:15},{id:'z4',name:'Schweppes Russian Wild Berry',menge:'6 l',kosten:12},{id:'z5',name:'Johannisbeersaft, klar',menge:'5 l',kosten:15},{id:'z6',name:'Eiswürfel',menge:'5 kg',kosten:8},{id:'z7',name:'Zitronen unbehandelt',menge:'6 Stück',kosten:0},{id:'z8',name:'TK-Beeren, Minze',menge:'',kosten:10},{id:'z9',name:'Zucker für Sirup (optional)',menge:'250 g',kosten:0}],hinweise:['12 l sind bei drei Kindern reichlich — das trägt sich nur, wenn die alkoholfreien Erwachsenen kräftig mitmachen. Da Saft und Limo billig sind und ungeöffnet zurückgehen, ist das kein teurer Fehler. Setzt trotzdem erst 4 l an und entscheidet nach einer Stunde, ob die zweite Runde kommt.','Der Johannisbeersaft muss klar sein, kein Nektar mit Fruchtfleisch — sonst setzt sich der Zapfhahn zu.']}};
 
 // ── State ──────────────────────────────────────────────────────
 // ── Adressen – immer auffüllen, nie überschreiben ────────────
@@ -770,6 +914,14 @@ function migrate(data){
   Object.keys(data.probetool.startZuweisung).forEach(id=>{
     if(!validIds.has(id))delete data.probetool.startZuweisung[id];
   });
+  // Getränke: neuer Bereich, bei Altbeständen (Server/localStorage) nachrüsten
+  if(!data.getraenke)data.getraenke=JSON.parse(JSON.stringify(INITIAL_DATA.getraenke));
+  if(data.getraenke.limoZiel===undefined)data.getraenke.limoZiel=12;
+  if(!data.getraenke.nachmittag)data.getraenke.nachmittag=JSON.parse(JSON.stringify(INITIAL_DATA.getraenke.nachmittag));
+  if(!data.getraenke.abend)data.getraenke.abend=JSON.parse(JSON.stringify(INITIAL_DATA.getraenke.abend));
+  if(!data.getraenke.aperitif)data.getraenke.aperitif=JSON.parse(JSON.stringify(INITIAL_DATA.getraenke.aperitif));
+  if(!data.getraenke.zutaten)data.getraenke.zutaten=JSON.parse(JSON.stringify(INITIAL_DATA.getraenke.zutaten));
+  if(!data.getraenke.hinweise)data.getraenke.hinweise=JSON.parse(JSON.stringify(INITIAL_DATA.getraenke.hinweise));
 }
 
 async function loadState(){
@@ -942,6 +1094,7 @@ function showTab(id,btn,src){
   if(id==='sitzplan') renderSitzplan();
   if(id==='probetool')renderProbetool();
   if(id==='mehr')     renderMehr();
+  if(id==='getraenke')renderGetraenke();
 }
 
 // ── Home ──────────────────────────────────────────────────────
@@ -2786,6 +2939,160 @@ function renderMehr(){
   document.getElementById('dl-wrap').innerHTML=html;
 }
 
+// ── Getränke ──────────────────────────────────────────────────
+function fmtL(n){return Number(n).toLocaleString('de-DE',{maximumFractionDigits:2});}
+function glaeserFromLiter(l){return Math.round((parseFloat(l)||0)*5);}
+function limoScaled(zielLiter){
+  const z=parseFloat(zielLiter)||4,factor=z/4;
+  return{
+    johannisbeer:Math.round(1.5*factor*100)/100,
+    gartenlimo:Math.round(2.5*factor*100)/100,
+    zitrone:Math.ceil(1*factor),
+    ansaetze:Math.ceil(z/4)
+  };
+}
+function gtInputText(section,id,field,val){
+  return `<input type="text" class="budget-input" value="${e(val)}" onchange="updGt('${section}','${id}','${field}',this.value)">`;
+}
+function gtInputNum(section,id,field,val,step){
+  return `<input type="number" class="budget-input" value="${val===null||val===undefined?'':val}" step="${step||1}" min="0" onchange="updGt('${section}','${id}','${field}',this.value)" style="max-width:90px">`;
+}
+function gtSelectKategorie(section,id,val){
+  const opts=['Softgetränke','Bier','Wein & Sekt','Aperitifs'];
+  return `<select class="budget-input" onchange="updGt('${section}','${id}','kategorie',this.value)">${opts.map(o=>`<option${o===val?' selected':''}>${e(o)}</option>`).join('')}</select>`;
+}
+function renderGetraenke(){
+  const g=ST.getraenke;
+  document.getElementById('gt-limo-ziel').value=g.limoZiel;
+  const sc=limoScaled(g.limoZiel);
+  document.getElementById('gt-limo-ansaetze').textContent=sc.ansaetze+' Ansatz'+(sc.ansaetze===1?'':'e')+' à 4 l';
+  document.getElementById('gt-limo-ziel-th').textContent='Für '+fmtL(g.limoZiel)+' l';
+  document.getElementById('gt-limo-tbody').innerHTML=`
+    <tr><td>Johannisbeersaft</td><td>1,5 l</td><td>${fmtL(sc.johannisbeer)} l</td></tr>
+    <tr><td>Gartenlimo</td><td>2,5 l</td><td>${fmtL(sc.gartenlimo)} l</td></tr>
+    <tr><td>Zitrone</td><td>1 Stück</td><td>${sc.zitrone} Stück</td></tr>`;
+
+  document.getElementById('gt-nm-personen').value=g.nachmittagPersonen;
+  document.getElementById('gt-ab-gaeste').value=g.abendGaeste;
+
+  document.getElementById('gt-nachmittag-tbody').innerHTML=g.nachmittag.map(row=>`
+    <tr>
+      <td>${gtInputText('nachmittag',row.id,'name',row.name)}</td>
+      <td>${gtInputNum('nachmittag',row.id,'menge',row.menge)}</td>
+      <td>${gtInputText('nachmittag',row.id,'einheit',row.einheit)}</td>
+      <td>${gtInputText('nachmittag',row.id,'notiz',row.notiz)}</td>
+      <td><button class="btn btn-d btn-sm" onclick="delGtRow('nachmittag','${row.id}')" style="padding:4px 8px;font-size:.75rem">✕</button></td>
+    </tr>`).join('');
+
+  document.getElementById('gt-abend-tbody').innerHTML=g.abend.map(row=>`
+    <tr>
+      <td>${gtInputText('abend',row.id,'name',row.name)}</td>
+      <td>${gtInputNum('abend',row.id,'menge',row.menge)}</td>
+      <td>${gtInputText('abend',row.id,'einheit',row.einheit)}</td>
+      <td>${gtSelectKategorie('abend',row.id,row.kategorie)}</td>
+      <td>${gtInputText('abend',row.id,'notiz',row.notiz)}</td>
+      <td><button class="btn btn-d btn-sm" onclick="delGtRow('abend','${row.id}')" style="padding:4px 8px;font-size:.75rem">✕</button></td>
+    </tr>`).join('');
+
+  document.getElementById('gt-aperitif-tbody').innerHTML=g.aperitif.map(row=>{
+    const liter=row.fix===false?g.limoZiel:row.liter;
+    const glaeser=glaeserFromLiter(liter);
+    const literCell=row.fix===false
+      ?`<span style="font-weight:600">${fmtL(liter)} l</span> <span style="font-size:.72rem;color:var(--text-l)">(Rezeptrechner)</span>`
+      :gtInputNum('aperitif',row.id,'liter',row.liter,0.5);
+    return `<tr>
+      <td>${gtInputText('aperitif',row.id,'name',row.name)}</td>
+      <td>${literCell}</td>
+      <td>${glaeser} Gläser</td>
+      <td><button class="btn btn-d btn-sm" onclick="delGtRow('aperitif','${row.id}')" style="padding:4px 8px;font-size:.75rem">✕</button></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('gt-zutaten-tbody').innerHTML=g.zutaten.map(row=>`
+    <tr>
+      <td>${gtInputText('zutaten',row.id,'name',row.name)}</td>
+      <td>${gtInputText('zutaten',row.id,'menge',row.menge)}</td>
+      <td>${gtInputNum('zutaten',row.id,'kosten',row.kosten)}</td>
+      <td><button class="btn btn-d btn-sm" onclick="delGtRow('zutaten','${row.id}')" style="padding:4px 8px;font-size:.75rem">✕</button></td>
+    </tr>`).join('');
+  const total=g.zutaten.reduce((s,z)=>s+(parseFloat(z.kosten)||0),0);
+  document.getElementById('gt-zutaten-total').textContent='≈ '+fmt(total)+' €';
+
+  document.getElementById('gt-hinweise').innerHTML=g.hinweise.map((h,i)=>`
+    <div class="gt-note">
+      <textarea rows="2" style="width:100%;border:none;background:transparent;padding:0;resize:vertical;
+        font-family:inherit;font-size:.85rem;line-height:1.55;color:inherit" onchange="updGtHinweis(${i},this.value)">${e(h)}</textarea>
+    </div>`).join('');
+}
+function updGtScalar(field,val){ST.getraenke[field]=parseInt(val)||0;saveState();renderGetraenke();}
+function updGtLimoZiel(val){
+  let v=parseFloat(String(val).replace(',','.'));
+  if(!v||v<4)v=4;
+  ST.getraenke.limoZiel=v;
+  saveState();renderGetraenke();
+}
+function updGt(section,id,field,val){
+  const row=ST.getraenke[section].find(r=>r.id===id);
+  if(!row)return;
+  if(field==='kosten'||field==='liter')row[field]=parseFloat(String(val).replace(',','.'))||0;
+  else if(field==='menge'&&(section==='nachmittag'||section==='abend'))row[field]=val===''?null:(parseFloat(String(val).replace(',','.'))||0);
+  else row[field]=val;
+  saveState();renderGetraenke();
+}
+function updGtHinweis(i,val){ST.getraenke.hinweise[i]=val;saveState();}
+function addGtRow(section){
+  const id=uid();
+  let row;
+  if(section==='nachmittag')row={id,name:'Neue Position',menge:0,einheit:'',notiz:''};
+  else if(section==='abend')row={id,name:'Neue Position',menge:0,einheit:'',notiz:'',kategorie:'Softgetränke'};
+  else if(section==='aperitif')row={id,name:'Neuer Behälter',liter:4,fix:true};
+  else if(section==='zutaten')row={id,name:'Neue Position',menge:'',kosten:0};
+  else return;
+  ST.getraenke[section].push(row);
+  saveState();renderGetraenke();
+}
+function delGtRow(section,id){
+  ST.getraenke[section]=ST.getraenke[section].filter(r=>r.id!==id);
+  saveState();renderGetraenke();
+}
+function fmtDatum(iso){
+  if(!iso)return'';
+  return new Date(iso+'T00:00:00').toLocaleDateString('de-DE',{day:'numeric',month:'long',year:'numeric'});
+}
+function renderGetraenkeMenu(){
+  const g=ST.getraenke;
+  const KAT=['Softgetränke','Bier','Wein & Sekt'];
+  let html=`
+    <div class="mc-eyebrow">${e(ST.hochzeit.braeutigam)} &amp; ${e(ST.hochzeit.braut)}</div>
+    <h2>Getränkekarte</h2>
+    <div class="mc-sub">${fmtDatum(ST.hochzeit.datum)} · ${e(ST.hochzeit.location)}</div>
+    <div class="mc-rule"></div>`;
+  KAT.forEach(kat=>{
+    const items=g.abend.filter(a=>a.kategorie===kat);
+    if(!items.length)return;
+    html+=`<div class="mc-section"><div class="mc-section-title">${e(kat)}</div>`;
+    items.forEach(it=>{html+=`<div class="mc-item">${e(it.name)}</div>`;});
+    html+=`</div>`;
+  });
+  if(g.aperitif.length){
+    html+=`<div class="mc-section"><div class="mc-section-title">Aperitifs · ab 17:00 Uhr</div>`;
+    g.aperitif.forEach(it=>{
+      const note=it.fix===false?'hausgemacht':'';
+      html+=`<div class="mc-item">${e(it.name)}${note?`<span class="mc-item-note">${note}</span>`:''}</div>`;
+    });
+    html+=`</div>`;
+  }
+  document.getElementById('menu-card-content').innerHTML=html;
+}
+function openGetraenkeMenu(){
+  renderGetraenkeMenu();
+  document.getElementById('getraenke-menu-modal').style.display='flex';
+  document.body.classList.add('printing-menu');
+}
+function closeGetraenkeMenu(){
+  document.getElementById('getraenke-menu-modal').style.display='none';
+  document.body.classList.remove('printing-menu');
+}
 
 // ── Init ──────────────────────────────────────────────────────
 loadState().then(()=>{ renderHome(); startSync(); });
