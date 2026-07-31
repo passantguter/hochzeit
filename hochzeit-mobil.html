@@ -1430,12 +1430,12 @@ function setSitzplanView(view){
 function renderSitzplan(){renderSitzplanStats();renderTischGrid();renderUnassigned();renderSelBar();if(sitzplanView==='raumplan')renderRaumplan();}
 
 // ── Raumplan ──────────────────────────────────────────────────
-// Badsaal Schnaittach: Saal 19×13m (247m²) + Bühne 8×5m (39m², zusätzlich, oben)
-// Gesamtfläche der Darstellung: 19m × 18m (Saal 13m + Bühne 5m oben)
+// Badsaal Schnaittach: Saal 13×19m (247m²) + Bühne 8×5m (39m², zusätzlich, oben)
+// Gesamtfläche der Darstellung: 13m × 24m (Saal 19m + Bühne 5m oben)
 // Zehnertisch: 210×140cm · Zwölfertisch: 280×140cm
 const RP={
-  totW:19,totH:18,   // Gesamtdarstellung (m)
-  saalH:13,          // Saalhöhe (m), Bühne = obere 5m
+  totW:13,totH:24,   // Gesamtdarstellung (m)
+  saalH:19,          // Saalhöhe (m), Bühne = obere 5m
   buehneH:5,buehneW:8, // Bühnenabmessungen
   tW:2.8,tH:1.4      // Referenzgröße für Auto-Layout (größter Tisch, 12er)
 };
@@ -1595,7 +1595,7 @@ function renderRaumplan(){
   const saalTopPct=buehneHpct; // Saal beginnt nach der Bühne
 
   let html=`<div class="raumplan-info">
-    <div class="raumplan-info-pill">📐 Saal: 19×13 m · <strong>247 m²</strong></div>
+    <div class="raumplan-info-pill">📐 Saal: 13×19 m · <strong>247 m²</strong></div>
     <div class="raumplan-info-pill">🎭 Bühne: 8×5 m · 39 m² (zusätzlich)</div>
     <div class="raumplan-info-pill">🪑 ${tische.length} Tische · ${fmt(tischFlaeche.toFixed(1))} m² Tischfläche</div>
     <div class="raumplan-info-pill${restFlaeche<30?' over':''}" style="${restFlaeche<30?'background:#fde8e8;color:var(--rose-d);border-color:var(--rose)':''}">✅ Restfläche mit Abstand: ~${Math.round(restFlaeche)} m²</div>
@@ -1616,7 +1616,7 @@ function renderRaumplan(){
     <span style="font-size:.75rem;color:var(--text-l)">Raster: ${ST.sitzplan.raster}cm</span>
   </div>`;
 
-  // Raum-Canvas (Gesamtfläche 19:18 Verhältnis)
+  // Raum-Canvas (Gesamtfläche 13:24 Verhältnis)
   const gitterStyle=ST.sitzplan.gitterAn
     ?`background-image:linear-gradient(to right, rgba(58,51,48,.10) 1px, transparent 1px),linear-gradient(to bottom, rgba(58,51,48,.10) 1px, transparent 1px);background-size:${(ST.sitzplan.raster/100/RP.totW)*100}% ${(ST.sitzplan.raster/100/RP.totH)*100}%;`
     :'';
@@ -1632,7 +1632,7 @@ function renderRaumplan(){
 
     <!-- Saal-Grenze (Übergang Bühne → Saal) -->
     <div style="position:absolute;top:${saalTopPct}%;left:0;right:0;height:2px;background:var(--border);pointer-events:none"></div>
-    <div style="position:absolute;top:${saalTopPct+0.5}%;left:4px;font-size:.58rem;color:var(--text-l);font-weight:700;pointer-events:none;opacity:.8">Saal 19×13 m (247 m²)</div>
+    <div style="position:absolute;top:${saalTopPct+0.5}%;left:4px;font-size:.58rem;color:var(--text-l);font-weight:700;pointer-events:none;opacity:.8">Saal 13×19 m (247 m²)</div>
 
     <!-- Eingang unten -->
     <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:14%;height:3px;background:var(--sage);pointer-events:none"></div>
