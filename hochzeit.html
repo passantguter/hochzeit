@@ -912,6 +912,8 @@ function migrate(data){
   data.dienstleister=data.dienstleister.filter(d=>d.kategorie!=='Musik'&&d.id!=='d2'&&d.id!=='d4');
   const foto_=data.dienstleister.find(d=>d.id==='d13');
   if(foto_&&foto_.name!=='Salome'){foto_.name='Salome';foto_.status='Zugesagt';}
+  const wahler_=data.dienstleister.find(d=>d.id==='d3');
+  if(wahler_&&wahler_.status!=='Vertrag unterschrieben')wahler_.status='Vertrag unterschrieben';
   mergeNewDienstleister();
   mergeNewTodos();
   if(!data.helfer)data.helfer=JSON.parse(JSON.stringify(INITIAL_DATA.helfer));
