@@ -1157,8 +1157,8 @@ function showTab(id,btn,src){
 
 // ── Home ──────────────────────────────────────────────────────
 function renderHome(){
-  const h=new Date('2026-09-05'),t=new Date();t.setHours(0,0,0,0);
-  document.getElementById('cd').textContent=Math.ceil((h-t)/86400000);
+  const h=new Date('2026-09-05T12:30:00'),t=new Date();
+  document.getElementById('cd').textContent=Math.max(0,Math.ceil((h-t)/86400000));
   const g=ST.gaeste;
   document.getElementById('s-eing').textContent=g.filter(x=>x.status!=='Abgesagt').reduce((s,x)=>s+x.personen,0);
   document.getElementById('s-zug').textContent=g.filter(x=>x.status==='Zugesagt').reduce((s,x)=>s+x.personen,0);
