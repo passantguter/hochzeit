@@ -142,6 +142,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .tl-time{width:90px;flex-shrink:0;font-size:.78rem;color:var(--text-l);font-weight:700;padding-top:2px}
 .tl-titel{font-weight:600;font-size:.88rem}
 .tl-notiz{font-size:.75rem;color:var(--text-l);margin-top:2px}
+.tl-icon{width:15px;height:15px;vertical-align:-2px;margin-right:5px;color:var(--sage-d)}
 
 /* Todo */
 .todo-item{display:flex;gap:10px;align-items:flex-start;padding:11px 0;border-bottom:1px solid #f0ebe4}
@@ -2968,11 +2969,16 @@ function renderProbetool(){
 }
 
 // ── Mehr ──────────────────────────────────────────────────────
+const TL_ICONS={
+  z2:'<svg class="tl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="15" r="6"/><circle cx="15" cy="9" r="6"/></svg>',
+  z4:'<svg class="tl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M3 16v-3a2 2 0 0 1 2-2h1l2-4h7l3 4h1a2 2 0 0 1 2 2v3"/><path d="M3 16h18"/><circle cx="7.5" cy="16.5" r="1.7"/><circle cx="16.5" cy="16.5" r="1.7"/></svg>'
+};
+function tlIcon(id){return TL_ICONS[id]||'';}
 function renderMehr(){
   document.getElementById('tl-fr').innerHTML=ST.zeitplan.freitag.map(z=>`
     <div class="tl-item">
       <div class="tl-time">${z.ende?z.zeit+' – '+z.ende:z.zeit}</div>
-      <div><div class="tl-titel">${e(z.titel)}</div>${z.notiz?`<div class="tl-notiz">${e(z.notiz)}</div>`:''}</div>
+      <div><div class="tl-titel">${tlIcon(z.id)}${e(z.titel)}</div>${z.notiz?`<div class="tl-notiz">${e(z.notiz)}</div>`:''}</div>
     </div>`).join('');
   const hz=[...ST.zeitplan.hochzeit].sort((a,b)=>a.zeit.localeCompare(b.zeit));
   document.getElementById('tl-hz').innerHTML=hz.map(z=>`
