@@ -2131,14 +2131,22 @@ function duplicateSitzplanForProbetool(){
   ST.probetool.tische=ST.sitzplan.tische
     .filter(t=>!t.name.toLowerCase().includes('catering'))
     .map(t=>({id:uid(),name:t.name,kapazitaet:t.kapazitaet,kapazitaetBasis:t.kapazitaet}));
-  // Aktuelle Sitzordnung der zugesagten Gäste als Startpunkt übernehmen (Algorithmus optimiert von dort aus weiter)
-  const startZuweisung={};
-  getProbetoolGuestPool().forEach(g=>{
+  // Aktuelle Sitzordnung der zugesagten Gäste 1:1 übernehmen – Tisch UND genauer Sitzplatz (seatIdx) –
+  // und direkt als Ergebnis anzeigen, damit es nach dem Kopieren exakt der echten Sitzordnung
+  // entspricht, statt erst durch "Berechnen" (neu) approximiert zu werden. startZuweisung bleibt
+  // zusätzlich als Startpunkt für den Optimierer bei einer künftigen Neuberechnung erhalten.
+  const pool=getProbetoolGuestPool();
+  const startZuweisung={},zuweisung={},seatIdx={};
+  pool.forEach(g=>{
     const t=ST.probetool.tische.find(x=>x.name===g.tisch);
-    if(t)startZuweisung[g.id]=t.id;
+    if(!t)return;
+    startZuweisung[g.id]=t.id;
+    zuweisung[g.id]=t.id;
+    if(g.seatIdx!=null)seatIdx[g.id]=g.seatIdx;
   });
   ST.probetool.startZuweisung=startZuweisung;
-  ST.probetool.ergebnis=null;
+  const seatedPool=pool.filter(g=>zuweisung[g.id]!=null);
+  ST.probetool.ergebnis={zuweisung,seatIdx,...ptBerechneMeta(zuweisung,seatedPool),erweiterungen:[],berechnetAm:new Date().toISOString()};
   saveState();renderProbetool();
 }
 
