@@ -2194,7 +2194,37 @@ function renderProbetoolSetup(){
       ${bt.size?` Brautpaartisch (${[...bt].map(n=>e(n)).join(', ')}) ausgeschlossen.`:''}
       ${cateringAusgeschlossen.length?` ${cateringAusgeschlossen.length} Cateringtisch(e) ausgeschlossen (${cateringAusgeschlossen.map(t=>e(t.name)).join(', ')}).`:''}
       ${startCount?` ${startCount} zugesagte Gäste mit bestehender Sitzordnung als Startpunkt übernommen.`:''}
-    </div>`:'<div style="margin-top:10px;font-size:.85rem;color:var(--text-l)">Noch keine Kopie vorhanden.</div>'}`;
+    </div>`:'<div style="margin-top:10px;font-size:.85rem;color:var(--text-l)">Noch keine Kopie vorhanden.</div>'}
+    <div style="margin-top:14px">
+      <div style="font-size:.82rem;color:var(--text-l);margin-bottom:6px">Tischanzahl &amp; -größe für dieses Probetool anpassen (unabhängig vom echten Sitzplan):</div>
+      ${ST.probetool.tische.map(t=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f0ebe4">
+        <input class="budget-input" style="flex:1" value="${e(t.name)}" placeholder="Tischname" onchange="updProbetoolTischFeld('${t.id}','name',this.value)">
+        <input type="number" min="1" class="budget-input" style="width:70px" value="${t.kapazitaet}" onchange="updProbetoolTischFeld('${t.id}','kapazitaet',this.value)">
+        <span style="font-size:.78rem;color:var(--text-l)">Plätze</span>
+        <button class="btn btn-d btn-sm" onclick="deleteProbetoolTisch('${t.id}')" style="padding:4px 8px;font-size:.75rem">✕</button>
+      </div>`).join('')}
+      <button class="btn btn-s btn-sm" style="margin-top:8px" onclick="addProbetoolTisch()">+ Tisch hinzufügen</button>
+    </div>`;
+}
+function addProbetoolTisch(){
+  const n=ST.probetool.tische.length+1;
+  ST.probetool.tische.push({id:uid(),name:'Tisch '+n,kapazitaet:10,kapazitaetBasis:10});
+  saveState();renderProbetool();
+}
+function updProbetoolTischFeld(id,field,val){
+  const t=ST.probetool.tische.find(x=>x.id===id);if(!t)return;
+  if(field==='kapazitaet'){
+    const k=Math.max(1,parseInt(val)||1);
+    t.kapazitaet=k;t.kapazitaetBasis=k;
+  }else{
+    t.name=val.trim();
+  }
+  saveState();renderProbetool();
+}
+function deleteProbetoolTisch(id){
+  if(!confirm('Tisch aus dem Probetool entfernen?'))return;
+  ST.probetool.tische=ST.probetool.tische.filter(t=>t.id!==id);
+  saveState();renderProbetool();
 }
 
 // ── Feste Gruppen (Paare/Familien, die immer zusammensitzen sollen) ──
