@@ -1584,6 +1584,9 @@ let _dragElementId=null;
 let _dragStartX=null,_dragStartY=null;
 let _raumSelection=[]; // [{kind:'tisch'|'element', id}] – Mehrfachauswahl im Raumplan
 function isRaumSelected(kind,id){return _raumSelection.some(s=>s.kind===kind&&s.id===id);}
+function selectedTische(){return _raumSelection.filter(s=>s.kind==='tisch').map(s=>ST.sitzplan.tische.find(t=>t.id===s.id)).filter(Boolean);}
+function tischSize(t){const def=tischSizeM(t.kapazitaet);return{w:t.w||def.w,h:t.h||def.h};}
+function tischPos(t){const idx=ST.sitzplan.tische.findIndex(x=>x.id===t.id);return(t.raumX!==null&&t.raumY!==null)?{x:t.raumX,y:t.raumY}:defaultRaumPos(idx);}
 let _swapMode=false;
 let _swapFirstId=null;
 function toggleSwapMode(){
@@ -1717,6 +1720,111 @@ function arrangeRaumplanInReihen(){
   ST.sitzplan.tische.forEach(t=>{t.raumX=null;t.raumY=null;t.raumRot=0;});
   saveState();renderRaumplan();
 }
+// ── Muster & Ausrichtung für ausgewählte Tische ─────────────────
+function arrangeSelectionPattern(pattern){
+  const sel=selectedTische();
+  if(sel.length<2){alert('Bitte mindestens 2 Tische auswählen (Shift+Klick im Raumplan).');return;}
+  sel.sort((a,b)=>tischPos(a).x-tischPos(b).x);
+  if(pattern==='raster')arrangeRasterGroup(sel);
+  else if(pattern==='fischgraeten')arrangeFischgraetenGroup(sel);
+  else arrangeReiheGroup(sel);
+  saveState();renderRaumplan();
+}
+function arrangeReiheGroup(sel){
+  const abstandWpct=((ST.sitzplan.abstand??150)/100/RP.totW)*100;
+  const widths=sel.map(t=>(tischSize(t).w/RP.totW)*100);
+  const totalW=widths.reduce((a,b)=>a+b,0)+abstandWpct*(sel.length-1);
+  const cx=sel.reduce((s,t)=>s+tischPos(t).x,0)/sel.length;
+  const cy=sel.reduce((s,t)=>s+tischPos(t).y,0)/sel.length;
+  let cursor=cx-totalW/2;
+  sel.forEach((t,i)=>{
+    const w=widths[i];
+    t.raumX=Math.max(2,Math.min(98,cursor+w/2));
+    t.raumY=Math.max(2,Math.min(98,cy));
+    t.raumRot=0;
+    cursor+=w+abstandWpct;
+  });
+}
+function arrangeRasterGroup(sel){
+  const abstandWpct=((ST.sitzplan.abstand??150)/100/RP.totW)*100;
+  const abstandHpct=((ST.sitzplan.abstand??150)/100/RP.totH)*100;
+  const cols=Math.max(1,Math.round(Math.sqrt(sel.length)));
+  const rows=Math.ceil(sel.length/cols);
+  const cellW=Math.max(...sel.map(t=>(tischSize(t).w/RP.totW)*100))+abstandWpct;
+  const cellH=Math.max(...sel.map(t=>(tischSize(t).h/RP.totH)*100))+abstandHpct;
+  const cx=sel.reduce((s,t)=>s+tischPos(t).x,0)/sel.length;
+  const cy=sel.reduce((s,t)=>s+tischPos(t).y,0)/sel.length;
+  const originX=cx-(cellW*cols)/2, originY=cy-(cellH*rows)/2;
+  sel.forEach((t,i)=>{
+    const col=i%cols, row=Math.floor(i/cols);
+    t.raumX=Math.max(2,Math.min(98,originX+col*cellW+cellW/2));
+    t.raumY=Math.max(2,Math.min(98,originY+row*cellH+cellH/2));
+    t.raumRot=0;
+  });
+}
+function arrangeFischgraetenGroup(sel){
+  const angle=40; // klassischer Fischgräten-Winkel
+  const abstandWpct=((ST.sitzplan.abstand??150)/100/RP.totW)*100;
+  const refWpct=(RP.tW/RP.totW)*100; // Referenzbreite (größter Standardtisch) als Taktmaß
+  const step=refWpct*0.72+abstandWpct; // versetzte Schrittweite für den Zickzack-Effekt
+  const cx=sel.reduce((s,t)=>s+tischPos(t).x,0)/sel.length;
+  const cy=sel.reduce((s,t)=>s+tischPos(t).y,0)/sel.length;
+  let cursor=cx-(step*(sel.length-1))/2;
+  sel.forEach((t,i)=>{
+    t.raumRot=i%2===0?angle:360-angle;
+    t.raumX=Math.max(2,Math.min(98,cursor));
+    t.raumY=Math.max(2,Math.min(98,cy+(i%2===0?-1.5:1.5)));
+    cursor+=step;
+  });
+}
+function alignSelectionY(){
+  const sel=selectedTische();
+  if(sel.length<2){alert('Bitte mindestens 2 Tische auswählen.');return;}
+  const avgY=sel.reduce((s,t)=>s+tischPos(t).y,0)/sel.length;
+  sel.forEach(t=>{t.raumX=tischPos(t).x;t.raumY=Math.max(2,Math.min(98,avgY));});
+  saveState();renderRaumplan();
+}
+function alignSelectionX(){
+  const sel=selectedTische();
+  if(sel.length<2){alert('Bitte mindestens 2 Tische auswählen.');return;}
+  const avgX=sel.reduce((s,t)=>s+tischPos(t).x,0)/sel.length;
+  sel.forEach(t=>{t.raumY=tischPos(t).y;t.raumX=Math.max(2,Math.min(98,avgX));});
+  saveState();renderRaumplan();
+}
+function distributeSelectionX(){
+  const sel=selectedTische();
+  if(sel.length<3){alert('Bitte mindestens 3 Tische auswählen (für gleichmäßigen Abstand).');return;}
+  const withPos=sel.map(t=>({t,pos:tischPos(t),hw:(tischSize(t).w/RP.totW*100)/2}));
+  withPos.sort((a,b)=>a.pos.x-b.pos.x);
+  const leftEdge=withPos[0].pos.x-withPos[0].hw;
+  const rightEdge=withPos[withPos.length-1].pos.x+withPos[withPos.length-1].hw;
+  const totalW=withPos.reduce((s,o)=>s+o.hw*2,0);
+  const gap=(rightEdge-leftEdge-totalW)/(withPos.length-1);
+  let cursor=leftEdge;
+  withPos.forEach(o=>{
+    o.t.raumX=Math.max(2,Math.min(98,cursor+o.hw));
+    o.t.raumY=o.pos.y;
+    cursor+=o.hw*2+gap;
+  });
+  saveState();renderRaumplan();
+}
+function distributeSelectionY(){
+  const sel=selectedTische();
+  if(sel.length<3){alert('Bitte mindestens 3 Tische auswählen (für gleichmäßigen Abstand).');return;}
+  const withPos=sel.map(t=>({t,pos:tischPos(t),hh:(tischSize(t).h/RP.totH*100)/2}));
+  withPos.sort((a,b)=>a.pos.y-b.pos.y);
+  const topEdge=withPos[0].pos.y-withPos[0].hh;
+  const botEdge=withPos[withPos.length-1].pos.y+withPos[withPos.length-1].hh;
+  const totalH=withPos.reduce((s,o)=>s+o.hh*2,0);
+  const gap=(botEdge-topEdge-totalH)/(withPos.length-1);
+  let cursor=topEdge;
+  withPos.forEach(o=>{
+    o.t.raumY=Math.max(2,Math.min(98,cursor+o.hh));
+    o.t.raumX=o.pos.x;
+    cursor+=o.hh*2+gap;
+  });
+  saveState();renderRaumplan();
+}
 function setTischAbstand(val){
   ST.sitzplan.abstand=Math.max(0,Math.min(300,parseInt(val)||0));
   saveState();renderRaumplan();
@@ -1787,6 +1895,25 @@ function renderRaumplan(){
     </label>
     <span style="font-size:.75rem;color:var(--text-l)">Raster: ${ST.sitzplan.raster}cm</span>
   </div>`;
+
+  const selTischeCount=_raumSelection.filter(s=>s.kind==='tisch').length;
+  if(selTischeCount>=2){
+    html+=`<div class="raumplan-selection-toolbar" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;padding:8px 12px;background:var(--cream);border:1px solid var(--border);border-radius:10px">
+      <span style="font-size:.8rem;font-weight:700;color:var(--text-l)">🧩 ${selTischeCount} Tische ausgewählt</span>
+      <label style="font-size:.8rem;font-weight:600;color:var(--text-l)">Muster:</label>
+      <select id="raumplan-pattern-select" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:.8rem;font-family:inherit">
+        <option value="reihe">Reihe</option>
+        <option value="raster">Raster</option>
+        <option value="fischgraeten">Fischgräten</option>
+      </select>
+      <button class="btn btn-s btn-sm" onclick="arrangeSelectionPattern(document.getElementById('raumplan-pattern-select').value)">Anwenden</button>
+      <span style="border-left:1px solid var(--border);height:20px"></span>
+      <button class="btn btn-s btn-sm" onclick="alignSelectionY()" title="Alle ausgewählten Tische auf eine gemeinsame Höhe (Y) bringen">↔ Gleiche Höhe</button>
+      <button class="btn btn-s btn-sm" onclick="alignSelectionX()" title="Alle ausgewählten Tische auf eine gemeinsame Spalte (X) bringen">↕ Gleiche Spalte</button>
+      <button class="btn btn-s btn-sm" onclick="distributeSelectionX()" title="Gleichmäßiger horizontaler Abstand (mind. 3 Tische)">⬌ Abstand gleich (H)</button>
+      <button class="btn btn-s btn-sm" onclick="distributeSelectionY()" title="Gleichmäßiger vertikaler Abstand (mind. 3 Tische)">⬍ Abstand gleich (V)</button>
+    </div>`;
+  }
 
   // Raum-Canvas (Gesamtfläche 13:24 Verhältnis)
   const gitterStyle=ST.sitzplan.gitterAn
@@ -1894,6 +2021,7 @@ function renderRaumplan(){
 
   html+=`<div class="raumplan-legend">
     <span>🖱 Klick: auswählen &nbsp;·&nbsp; Shift+Klick: mehrere auswählen &nbsp;·&nbsp; Drag oder Pfeiltasten: (mehrfach) verschieben</span>
+    <span>🧩 Ab 2 ausgewählten Tischen: Muster (Reihe/Raster/Fischgräten) anwenden oder ausrichten &amp; gleichmäßig verteilen</span>
     <span>↻: +90° &nbsp;·&nbsp; ‹›: ±15° Feinjustierung (Tische) &nbsp;·&nbsp; ✎: Größe/Name/Typ bearbeiten &nbsp;·&nbsp; ✕: löschen (Elemente)</span>
     <span>🟩 gestrichelt: Tisch inkl. Abstandszone</span>
     <span>📏 Maßstab: Zehnertisch 210×140 cm · Zwölfertisch 280×140 cm</span>
